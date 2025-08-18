@@ -1,0 +1,30 @@
+{
+  "name": "shadowflow",
+  "version": "1.0.0",
+  "description": "Privacy-preserving decentralized funding platform using Avalanche eERC20",
+  "main": "index.js",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy:local": "forge script script/Deploy.s.sol --rpc-url local --broadcast",
+    "start:network": "avalanche network start",
+    "stop:network": "avalanche network stop",
+    "deploy:blockchain": "avalanche blockchain deploy shadowflowsubnet"
+  },
+  "keywords": [
+    "avalanche",
+    "privacy",
+    "erc20",
+    "crowdfunding",
+    "blockchain"
+  ],
+  "author": "ShadowFlow Team",
+  "license": "MIT",
+  "dependencies": {
+    "@avalabs/avalanche-cli": "^1.9.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.0",
+    "prettier-plugin-solidity": "^1.1.0"
+  }
+}
