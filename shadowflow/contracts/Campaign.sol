@@ -213,6 +213,7 @@ contract Campaign is ICampaign {
         emit FundsWithdrawn(
             address(this),
             msg.sender,
+            withdrawalAmount,
             block.timestamp,
             keccak256(proof)
         );
@@ -269,6 +270,7 @@ contract Campaign is ICampaign {
         emit FundsWithdrawn(
             address(this),
             msg.sender,
+            encryptedAmount,
             block.timestamp,
             keccak256(proof)
         );

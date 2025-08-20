@@ -80,12 +80,14 @@ interface ICampaign {
      * @dev Emitted when funds are withdrawn from the campaign
      * @param campaign Address of the campaign contract
      * @param creator Address of the campaign creator
+     * @param encryptedAmount Encrypted amount withdrawn (maintains privacy)
      * @param timestamp When the withdrawal was made
      * @param proofHash Hash of the withdrawal proof
      */
     event FundsWithdrawn(
         address indexed campaign,
         address indexed creator,
+        bytes encryptedAmount,
         uint256 timestamp,
         bytes32 proofHash
     );
