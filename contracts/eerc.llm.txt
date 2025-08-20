@@ -1,0 +1,745 @@
+---
+title: Welcome
+---
+
+Encrypted ERC is a privacy-preserving token protocol that enables fully encrypted token transfers on EVM chains while maintaining regulatory compliance through zero-knowledge proofs and designated auditor oversight.
+
+## Getting Started
+
+<CardGroup>
+  <Card title="What is Encrypted ERC?" href="getting-started/what-is-encrypted-erc">
+    An introduction to eERC
+  </Card>
+  <Card title="Protocol Overview" href="getting-started/protocol-overview">
+    See the high level explanation of the protocol
+  </Card>
+</CardGroup>
+
+## Architecture
+
+<CardGroup>
+  <Card title="User Balances" href="architecture/balance-amount">
+    How are the user balances stored?
+  </Card>
+  <Card title="Registration Operation" href="architecture/registration-operation">
+    How does registration work?
+  </Card>
+  <Card title="Mint Operation" href="architecture/mint-operation">
+    Minting encrypted tokens
+  </Card>
+  <Card title="Deposit Operation" href="architecture/deposit-operation">
+    Start using encrypted tokens
+  </Card>
+  <Card title="Transfer Operation" href="architecture/transfer-operation">
+    How does transfer execute?
+  </Card>
+  <Card title="Withdrawal Operation" href="architecture/withdrawal-operation">
+    Convert encrypted tokens back to ERC-20
+  </Card>
+</CardGroup>
+
+## SDK
+
+<CardGroup>
+  <Card title="SDK Overview" href="usage/sdk-overview">
+    Learn about how to integrate eERC
+  </Card>
+  <Card title="useEERC" href="usage/use-eerc">
+    Main entry point to interface with the protocol
+  </Card>
+  <Card title="useEncryptedBalance" href="usage/use-encrypted-balance">
+    Managed encrypted balances
+  </Card>
+</CardGroup>
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: What is Encrypted ERC?
+---
+
+**Encrypted ERC** is a privacy-focused implementation of ERC20-like tokens that allows users to perform confidential transactions on the blockchain. Unlike traditional ERC20 tokens where all balances and transfers are publicly visible, Encrypted ERC uses advanced cryptographic techniques to keep transaction amounts and user balances private while maintaining the ability to verify their correctness.
+
+At its core, Encrypted ERC solves one of the fundamental challenges in blockchain technology: the tension between transparency and privacy. While blockchain's transparent nature is crucial for security and verification, it can be problematic for businesses and individuals who need to keep their financial transactions private. Encrypted ERC bridges this gap by implementing a system where transactions can be verified without revealing the actual amounts being transferred.
+
+In addition, Encrypted ERC incorporates a powerful auditability feature that addresses regulatory compliance concerns. This feature allows designated regulatory authorities to access and review transaction details through auditor keys, ensuring that while transactions remain private to the general public, authorized regulators can perform necessary oversight functions when required. This balanced approach maintains user privacy while supporting regulatory compliance frameworks in the blockchain ecosystem.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: Protocol Overview
+---
+
+The Encrypted ERC system combines smart contracts and zero-knowledge circuits to create a privacy-preserving token system on the blockchain. While traditional tokens expose all transaction details publicly, Encrypted ERC ensures that balances and transfer amounts remain confidential while maintaining verifiability.
+
+The protocol has two versions: Standalone and Converter. Each one has different functions designed for specific uses in the token ecosystem.
+
+## Standalone Version
+
+The Standalone version lets users create new private tokens. This is similar to creating a standard ERC-20 token, where you also set a name and symbol for the token. It's perfect for users who want to launch new tokens with built-in privacy features.
+
+Key features of the Standalone version include:
+* **Private Minting:** This allows users to create new tokens privately, adding to the total supply while keeping the transaction details confidential.
+* **Private Burning:** Users can burn tokens privately, removing them from circulation while ensuring that transaction details stay private.
+
+## Converter Version
+
+The Converter version is for adding privacy features to existing tokens. It converts standard ERC-20 tokens into private versions, providing privacy without changing the original token setup.
+
+Key functions of the Converter version include:
+* **Deposit:** Users can deposit their existing ERC-20 tokens into the system to convert them into private tokens, keeping the original token features intact while adding privacy.
+* **Withdraw:** This lets users take out their private tokens, giving them the ability to switch their tokens between private and public as needed.
+
+## Structure
+
+The system employs various circuits to handle different operations. The Registration Circuit verifies the user's cryptographic credentials, ensuring the public key is correctly derived from the private key. The Transfer Circuit manages private token transfers, ensuring the sender has sufficient balance and that the transaction is correctly encrypted for the receiver and auditor. The Mint Circuit handles the creation of new tokens, ensuring the mint amount is properly encrypted and verifiable by the auditor. Lastly, the Withdraw Circuit manages the conversion of private tokens back to public ones, verifying the user's balance and ensuring the operation is auditable. 
+
+Cryptographic operations within the system rely on elliptic curve cryptography, specifically the BabyJubjub curve, to perform secure operations. The system uses ElGamal encryption for balance privacy and Poseidon encryption for creating verifiable audit trails. These cryptographic techniques ensure that all token operations are conducted privately and securely. 
+
+The use of zero-knowledge proofs allows the system to verify transactions without revealing sensitive information, maintaining the integrity and confidentiality of user data on the blockchain. This architecture ensures that while the blockchain maintains its transparency for verification purposes, user privacy is preserved at all levels of operation.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: Encrypted Balances
+---
+
+## Registration
+
+For every Encrypted ERC contract a user registers, they generate a unique keypair:
+
+- An encryption key stored in the Encrypted ERC smart contract.
+- A decryption key kept securely by the user.
+
+These keys are generated during the user's registration to the protocol and are completely independent of the user's on-chain account keys.
+
+## Encrypted Balance
+User balances are encrypted with the encryption key to maintain confidentiality. The protocol uses two types of encryption: ElGamal Encryption and Poseidon Encryption.
+
+Encrypted balances are stored in the Encrypted ERC smart contract as a mapping of user addresses to encrypted balances.
+
+```solidity
+mapping(address user => EncryptedBalance balance) balances;
+```
+
+The encrypted balance contains the following fields:
+
+* <code>eGCT</code> - ElGamal Ciphertext of the user's balance.
+* <code>balanceList</code> - records the history of the user's balance.
+* <code>nonce</code> - used to invalidate old balance states.
+* <code>transactionIndex</code> - used to store the current balance state.
+* <code>balancePCT</code> - Poseidon Ciphertext of the user's balance.
+* <code>amountPCTs</code> - Poseidon Ciphertexts of the user's received amounts.
+
+```solidity
+struct EncryptedBalance {
+    EGCT eGCT;
+    mapping(uint256 index => BalanceHistory history) balanceList;
+    uint256 nonce;
+    uint256 transactionIndex;
+    uint256[7] balancePCT; 
+    AmountPCT[] amountPCTs;
+}
+```
+
+## Balance List & Nonce
+
+Whenever a balance-changing action (mint, deposit, transfer, burn, withdraw) finishes, the contract computes
+
+```solidity
+hash = keccak256(eGCT ‖ nonce)
+```
+
+and stores `BalanceHistory{index: transactionIndex, isValid: true}` at `balanceList[hash]`.
+
+Later, when a user submits a zero-knowledge proof, they include the matching ciphertext.
+
+The contract re-computes the same hash and checks balanceList to decide whether that ciphertext really is the latest one. If anything has touched the balance after the proof was generated, the stored hash has already changed and the proof fails.
+
+Instead of iterating through balanceList to mark old hashes invalid, the contract increments the nonce. Because the hash key always includes nonce, every pre-existing key becomes invalid. The next balance commit will be formed with the new nonce, starting a fresh logical epoch. This O(1) invalidation is crucial to keep gas per spend bounded even after thousands of prior deposits.
+
+## Transaction Index
+
+Each time the contract writes a new entry into balanceList it tags the event with the current transactionIndex, then increments the counter.
+The same index is embedded in each AmountPCT record.
+When a withdrawal, burn, or transfer succeeds, the contract already knows which transactionIndex corresponds to the ciphertext used in the proof. Starting from the end of the amountPCTs array, the function discards every record with older index.
+
+## Why this system is needed ?
+
+* `balanceList` provides the yes/no answer: “Is the ciphertext in this proof still current?”
+* `transactionIndex` gives a seekable position inside amountPCTs so the contract can remove or keep individual records.
+* `nonce` prevents the size of balanceList and its maintenance cost from growing forever by letting the contract wipe whole eras at once.
+
+A proof prepared off-chain is only valid for the exact (eGCT, nonce) pair that existed when it was built.
+If anyone injects a new transaction that changes the ciphertext before the proof is mined, the hash changes, the balanceList lookup fails, and the attacker learns nothing except that the victim tried to spend. Conversely, once the victim’s spend succeeds, nonce is bumped, so any stale copy of that proof left in the mempool can never be replayed.
+The end result is a balance-tracking scheme that is:
+- **verifiable** - proofs must reference a hash that balanceList marks valid,
+- **efficient** - nonce invalidates entire old eras in constant gas, and
+- **orderly** - transactionIndex lets the contract edit per-deposit records precisely.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: Registration
+---
+
+When the owner of the protocol wants to mint encrypted tokens in standalone mode, they initiate a minting process that creates new encrypted tokens directly within the system, similar to how a traditional ERC20 token mint works. This process uses zero-knowledge proofs to maintain privacy while ensuring the mint operation is valid and authorized.
+
+```solidity
+type RegistrationCircuit struct {
+	Sender RegistrationSender
+}
+```
+
+The registration circuit is the smallest circuit in the protocol taking only the sender's registration details, which include their private key, public key, and registration hash. This simple yet crucial circuit serves as the entry point for all subsequent private operations within the Encrypted ERC system.
+
+Before a user can participate in any encrypted operations, the system verifies that the sender's public key is mathematically well-formed, ensuring it follows the proper elliptic curve cryptography standards on the BabyJubJub curve. The circuit also validates that the sender's registration hash which is the Poseidon Hash of the chain id, private key and address of the user. This check is essential to prevent a user registering to the system using another user's proof and other proofs from different chains.
+
+The registration process is handled by a separate registrar contract that works in conjunction with the Encrypted ERC system. When a user successfully completes registration, their public key and registration details are stored in the registrar contract, making them eligible to participate in private mints, transfers, and withdrawals. The Encrypted ERC contract validates user participation by checking their registration status through the registrar.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: Mint Operation
+---
+
+<Warning>
+Only available in Standalone mode.
+</Warning>
+
+When the owner of the protocol wants to mint encrypted tokens in standalone mode, they initiate a minting process that creates new encrypted tokens directly within the system, similar to how a traditional ERC20 token mint works. This process uses zero-knowledge proofs to maintain privacy while ensuring the mint operation is valid and authorized.
+
+```solidity
+type MintCircuit struct {
+	Receiver      Receiver
+	Auditor       Auditor
+	MintNullifier MintNullifier
+	ValueToMint   frontend.Variable
+}
+```
+
+The circuit takes four key pieces of information: the receiver's details (who will receive the encrypted tokens), the auditor's information for compliance tracking, a mint nullifier to prevent double-spending attacks, and the amount to be minted (ValueToMint). The mint amount isn't marked as public since the minting process maintains the privacy throughout.
+
+Before processing the mint, the system performs several critical validations through the circuit. It verifies that the receiver's encrypted value correctly represents the desired mint and also validates that the mint nullifier hasn't been used before through a check of MintNullifier, which is the Poseidon Hash of the chain id and auditor ciphertext. This mechanism is used to prevent the multiple usage of the same proof in one chain. Additionally, it ensures both the receiver's and auditor's encrypted summaries are properly formed and include the mint amount, encrypted with their respective public keys.
+
+The smart contract handles the actual minting through advanced cryptographic operations. The resulting ElGamal ciphertext is homomorphically added to user's current balance, allowing the user to increase thier encrypted balance without revealing any amounts. This homomorphic property of ElGamal encryption means that adding encrypted values together produces an encryption of the sum, maintaining privacy throughout the operation.  The contract also updates the user's balancePCT, which represents their current balance state after the mint.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: Deposit Operation
+---
+
+<Warning>
+Only available in the Converter mode.
+</Warning>
+
+## Token Tracker
+
+The Converter mode of the protocol uses a Token Tracker system to manage multiple ERC20 tokens that can be converted into their encrypted versions. Each token gets assigned a unique ID number, starting from 1 (ID 0 is reserved for the standalone mode of EncryptedERC).
+
+First, the system checks if the token being deposited is already registered in the protocol. If it's a new token, the contract automatically adds it to the tracked tokens list and assigns it a unique token ID. This tracking system allows the protocol to handle multiple different ERC20 tokens while keeping them organized in the encrypted space. 
+
+## Deposit
+
+Unlike withdrawal, transfer, mint and register which all require zero-knowledge proofs, deposit operation is handled differently, requiring no proofs. This is because deposits are moving tokens from a public state (regular ERC20) to a private state (encrypted balances). When depositing, the user is simply converting their publicly visible ERC20 tokens into encrypted tokens. The protocol can verify this operation through standard ERC20 transfer functions and balance checks - there's no need to prove anything about private states because:
+
+* The initial balance is publicly known (it's the deposit amount)
+
+* The transfer of ERC20 tokens is publicly verifiable on-chain
+
+When users try to deposit different tokens, they might encounter tokens with varying decimal places (like USDC with 6 decimals or WETH with 18 decimals). Therefore the protocol needs to handle these differences smoothly, without any lose of user's tokens. The conversion process handles any necessary decimal adjustments between the original token and the encrypted one. 
+
+```solidity
+if (tokenDecimals > decimals) {
+    uint256 scalingFactor = 10 ** (tokenDecimals - decimals);
+    value = _amount / scalingFactor;
+    dust = _amount % scalingFactor;
+} else if (tokenDecimals < decimals) {
+    uint256 scalingFactor = 10 ** (decimals - tokenDecimals);
+    value = _amount * scalingFactor;
+    dust = 0;
+}
+```
+
+After adjusting the decimals, the system creates an encrypted version of the deposit amount using ElGamal encryption on the BabyJubJub curve. This encryption uses the depositor's public key, ensuring that only they can later access these tokens.
+
+For first-time deposits, the protocol initializes a new encrypted balance. For subsequent deposits, it adds the new encrypted amount using homomorphic addition:
+
+```solidity
+if (balance.eGCT.c1.X == 0 && balance.eGCT.c1.Y == 0) {
+    balance.eGCT = _eGCT;
+} else {
+    balance.eGCT.c1 = BabyJubJub._add(balance.eGCT.c1, _eGCT.c1);
+    balance.eGCT.c2 = BabyJubJub._add(balance.eGCT.c2, _eGCT.c2);
+}
+```
+
+Each deposit operation also stores an amountPCT which will be essential for verifying future transactions within the encrypted system. This creates a secure bridge between public and private token states while maintaining the mathematical properties needed for later encrypted operations.
+
+## Dust
+
+When users deposit tokens with a higher number of decimal places than what the encrypted system can process, it may lead to tiny remainders or "dust" amounts. This occurs because the system can only support a certain level of decimal precision, and any surplus beyond this precision becomes these dust amounts. Such minute tokens are not convertible within the system but are not lost. Instead, the system responsibly tracks these dust amounts on behalf of the user and automatically returns these tokens. This mechanism is implemented to provide transparency and maintain trust, allowing users to effortlessly manage and retrieve any outstanding fractional tokens, thus upholding the integrity of their digital assets.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: Transfer Operation
+---
+
+The transfer process begins with three main participants: a sender, a receiver, and an auditor. Each transfer operation must maintain privacy while ensuring security and regulatory compliance.
+
+When a user initiates a transfer, the user needs to prove some data using Zero-Knowledge circuits. First, it checks if the sender has sufficient funds for the transfer. The system can confirm the sender has enough tokens without revealing their actual balance to anyone. Next, it verifies the sender's identity using their public-private key pair. This is similar to checking a digital signature, ensuring only the rightful owner can transfer their tokens.
+
+```solidity
+type TransferCircuit struct {
+	Sender          Sender
+	Receiver        Receiver
+	Auditor         Auditor
+	ValueToTransfer frontend.Variable
+}
+```
+
+The actual transfer involves creating two encrypted values:
+
+* A negative amount (subtraction) for the sender
+
+* A positive amount (addition) for the receiver
+
+Both of these values are encrypted using ElGamal encryption, which allows mathematical operations on encrypted values. The system uses the BabyJubJub elliptic curve for these cryptographic operations. For each transfer, the system also creates _AmountPCT_ for the receiver that contain the encrypted transaction details.
+
+When the sender's balance is updated, their BalancePCT is also updated to reflect the new state. This creates a verifiable proof of the remaining balance after the subtraction. The system maintains a history of these changes through a nonce mechanism - instead of deleting old records, it simply increments the nonce to invalidate previous states.
+
+For regulatory compliance, the system creates a special encrypted summary for the auditor. This summary contains the transfer details but can only be decrypted by the designated auditor using their private key.
+
+The transfer is recorded in the system's state through several updates:
+
+* The sender's encrypted balance is updated by subtracting the transfer amount
+
+* The sender's BalancePCT is updated to reflect their new balance state
+
+* The receiver's encrypted balance is updated by adding the transfer amount
+
+* New AmountPCT is created and stored for receiver
+
+* The auditor receives their encrypted transaction summary
+
+Throughout this process, all sensitive information (balances, transfer amounts) remains encrypted. The only publicly visible information is that a transfer occurred between two addresses. The actual amounts and balances are only visible to the parties directly involved and the authorized auditor. The combination of AmountPCTs and BalancePCTs creates a complete, verifiable history of transactions while maintaining privacy and enabling necessary compliance checks.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: Withdrawal Operation
+---
+
+When a user wants to withdraw their tokens from the encrypted system, they initiate a withdrawal process that involves both their encrypted balance and regular ERC20 tokens. The process starts with the user's encrypted balance, which is stored in the smart contract. When initiating a withdrawal, the user must first prove they have sufficient funds through a withdrawal circuit.
+
+```solidity
+type WithdrawCircuit struct {
+	Sender      WithdrawSender
+	Auditor     Auditor
+	ValueToBurn frontend.Variable `gnark:",public"`
+}
+```
+
+The circuit takes three key pieces of information: the sender's details (including their encrypted balance), the auditor's information, and the amount they want to withdraw (ValueToBurn). This amount is marked as public since it will eventually be visible on-chain when converted to regular ERC20 tokens.
+
+Before processing the withdrawal, the system performs several validations through the circuit. It verifies the user's identity using their public-private key pair and confirms their encrypted balance is sufficient for the withdrawal. The circuit also creates an encrypted record for the auditor, ensuring regulatory compliance without compromising privacy.
+
+The smart contract then handles the actual withdrawal process. It first updates the user's encrypted balance by subtracting the withdrawal amount. This operation happens in encrypted space using ElGamal encryption. The contract also updates the user's _balancePCT_, which represents their current balance state after the withdrawal.
+
+Finally, the contract handles the conversion from encrypted to regular ERC20 tokens. This step includes managing any necessary decimal adjustments between the two token systems, as different tokens might have different decimal places. The contract calculates the correct amount and transfers the regular ERC20 tokens to the user's address.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: SDK Overview
+---
+
+The eERC SDK enables developers to interact effortlessly with the EncryptedERC (eERC) protocol deployed on the L1. It simplifies various tasks, including the generation of cryptographic proofs, as well as securely encrypting and decrypting balances. The SDK also facilitates the registration of users and manages operations such as minting, burning, and transferring encrypted tokens.
+
+* [Github Repo](https://github.com/ava-labs/eerc-sdk)
+* [Npm Package](https://www.npmjs.com/package/@avalabs/eerc-sdk)
+
+By leveraging two core hooks—useEERC and useEncryptedBalance—developers can initialize the SDK, manage encrypted token balances, and perform essential operations such as minting, burning, transferring, and decrypting balances. These hooks simplify integration with the protocol, ensuring an efficient and secure development experience. The following sections explain the useEERC and useEncryptedBalance hooks in detail, including their parameters and return values.
+
+To install run one of the below commands:
+
+```bash
+npm install @avalabs/eerc-sdk
+```
+
+```bash
+pnpm install @avalabs/eerc-sdk
+```
+
+```bash
+yarn add @avalabs/eerc-sdk
+```
+
+<Info>
+To initialize the eERC SDK, ensure that wagmi is installed and configured correctly in your application. The official documentation is [here](https://wagmi.sh/react/getting-started).
+</Info>
+
+## Example Implementation
+
+To see the eERC SDK in action, check out our example implementation:
+
+* [GitHub Repository](https://github.com/BeratOz01/3dent)
+* [Live Demo](https://www.3dent.xyz/)
+
+This example provides a practical reference for implementing the useEERC and useEncryptedBalance hooks in your own application.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: useEERC
+---
+
+The `useEERC` hook is the main entry point for the SDK, responsible for initializing and managing interactions with the Encrypted ERC (eERC) protocol. It connects to the eERC contract, ensuring access to core functionalities such as user registration, encrypted token management, and balance decryption.
+
+## Usage
+
+```javascript maxLines=0
+const { publicClient } = usePublicClient();
+const { walletClient } = useWalletClient();
+
+const {
+    isInitialized,
+    isAllDataFetched,
+    isRegistered,
+    isConverter,
+    publicKey,
+    auditorAddress,
+    owner,
+    auditorPublicKey,
+    isAuditorKeySet,
+    name,
+    symbol,
+    isDecryptionKeySet,
+    areYouAuditor,
+    hasBeenAuditor,
+​
+    // actions
+    generateDecryptionKey,
+    register,
+    auditorDecrypt,
+    isAddressRegistered,
+    useEncryptedBalance,
+    refetchEercUser,
+    refetchAuditor,
+    setContractAuditorPublicKey,
+} = useEERC(
+    publicClient,
+    walletClient,
+    contractAddress,
+    circuitURLs,
+    decryptionKey
+);
+```
+
+## Parameters
+
+* `publicClient` : [PublicClient](https://viem.sh/docs/clients/public.html)
+* `walletClient` : [Wallet Client](https://viem.sh/docs/clients/wallet.html) for sending transactions
+* `contractAddress` : Address of the deployed eERC contract
+
+* `circuitURLs` : 
+```javascript maxLines=0
+    {
+      register: {
+        wasm: string,
+        zkey: string,
+      },
+      transfer: {
+        wasm: string,
+        zkey: string,
+      },
+      mint: {
+        wasm: string,
+        zkey: string,
+      },
+      withdraw: {
+        wasm: string,
+        zkey: string,
+      },
+      burn: {
+        wasm: string,
+        zkey: string,
+      },
+    }
+```
+`wasm/zkey URLs` : The URLs of the files used for generating the proofs.
+
+* `decryptionKey` _(optional)_ : `string` A decryption key associated with the user's account. If not provided, the decryption key can be generated during registration or using the `generateDecryptionKey` method.
+
+<Error>
+If the Wasm files are being served locally, ensure the URLs start with `/` (e.g., `/path/to/wasm_file.wasm`). For remote files, provide the full URL (e.g., `https://example.com/wasm_file.wasm`). Incorrect URL formatting may prevent the Wasm modules from loading correctly.
+</Error>
+
+<Error>
+The decryption key can be generated during the registration process or by calling the `generateDecryptionKey` function. However, it is essential to use a wallet created with a seed and not through an MPC or any other mechanism that generates wallets without a deterministic seed. During decryption key derivation, the user signs a predefined message. If the wallet lacks a consistent seed, the signature will vary, and the user will not be able to use the protocol correctly. Always ensure the wallet is securely and deterministically generated using a seed.
+</Error>
+
+## Returns
+
+The `useEERC` hook returns an object containing both state variables and methods that provide full interaction with the eERC protocol.
+
+* `isInitialized: boolean`
+ Indicates whether the SDK has been initialized successfully.
+* `isAllDataFetched: boolean`
+ Indicates that all required data fetched from protocol.
+* `isRegistered: boolean`
+Indicates whether the user is registered with the eERC protocol.
+* `isConverter: boolean`
+ Specifies if the eERC is converter or not.
+* `publicKey: bigint[]`
+Public key of the user.
+* `auditorAddress: 0x{string}`
+Protocol auditor address.
+* `owner: 0x{string}`
+Protocol owner (deployer) address.
+* `auditorPublicKey: bigint[]`
+Public key of the eERC auditor.
+* `isAuditorKeySet: boolean`
+Indicates whether the auditor key is set in the protocol.
+* `name: string`
+The name of the eERC token (available only in standalone mode).
+* `symbol: string`
+The symbol of the eERC token (available only in standalone mode).
+* `isDecryptionKeySet: boolean`
+Returns true if the user is registered and decryption key is not set.
+* `areYouAuditor: boolean`
+Returns true if the current user is an auditor for the eERC contract.
+* `hasBeenAuditor: { isChecking: boolean; isAuditor: boolean }`
+Tracks whether the user has been an auditor and whether it is currently being checked.
+
+
+<Warning>
+eERC transfer [app](https://eerc.avacloud.io) only support standalone eERCs.
+</Warning>
+
+## Methods
+
+* `generateDecryptionKey(): Promise<string>` Generates a decryption key for the user, set the key internally and return the key for storing later use.
+* `register(): Promise<{key:string; transactionHash:string}>` Registers the user with the eERC protocol. Only one registration per L1 is required.
+  * Returns:
+    * `key: string` - The decryption key.
+    * `transactionHash: string` - The transaction hash of the registration.
+* `auditorDecrypt(): Promise<DecryptedTransaction[]>` Decrypts encrypted transactions using the auditor's public key. If the user is not an auditor, this method will throw an error.
+  * Returns an array of `DecryptedTransaction`
+```javascript
+type DecryptedTransaction = {
+  type: string;
+  amount: string;
+  sender: `0x${string}`;
+  receiver: `0x${string}` | null;
+  transactionHash: `0x${string}`;
+};  
+```
+* `isAddressRegistered(address: string): {isRegistered: boolean; error: string }` Checks if a specific address is registered with the eERC protocol.
+* `useEncryptedBalance` Returns a custom hook that enables encrypted operations like mint, burn and transfer privately. The following section will explain detailed usage.
+* `refetchEercUser` Returns the public key of the registered user.
+* `refetchAuditor` Returns the public key of the auditor.
+* `setContractAuditorPublicKey(address: string): Promise<{transactionHash:string}>` Sets the auditor's public key for the eERC.
+
+<Error>
+Only the owner can set the auditor's public key.
+</Error>
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+---
+title: useEncryptedBalance
+---
+
+The `useEncryptedBalance` hook provides developers with an interface to manage encrypted token balances within the eERC protocol. This includes accessing decrypted and encrypted balances, as well as performing key actions such as minting, burning, transferring tokens, and fetching updated balance data. The hook is designed to simplify balance management while leveraging the protocol's encryption and privacy features.
+
+## Usage
+
+```javascript maxLines=0
+const { useEncryptedBalance } = useEERC(...);
+const {
+	decryptedBalance,
+	parsedDecryptedBalance,
+	encryptedBalance,
+	auditorPublicKey,
+	decimals,
+	
+	// functions
+	privateMint,
+	privateBurn,
+	privateTransfer,
+	withdraw,
+	deposit,
+	decryptMessage,
+
+	//refetch
+	refetchBalance
+} = useEncryptedBalance(tokenAddress?:string)
+```
+
+## Parameters
+
+* `tokenAddress` _(optional)_ : `0x${string}` The address of the underlying ERC20 token. This parameter is only required in converter mode. 
+
+## Returns
+
+* `decryptedBalance: bigint`
+The user's decrypted token balance
+* `parsedDecryptedBalance: string`
+The user's decrypted token balance as a string.
+* `auditorPublicKey: bigint[]`
+Auditor Public key.
+* `encryptedBalance: bigint[]`
+Encrypted balance of the user as an array
+* `decimals: bigint`
+Encrypted token decimals
+
+## Methods
+
+* `privateMint(recipient: string, amount: bigint, message?: string): Promise<{ transactionHash: string }>`
+Mints encrypted tokens for a specified recipient address. This action can only be performed by the contract owner.
+* `privateBurn(amount: bigint, message?: string): Promise<{ transactionHash: string }>`
+Burns a specified amount of encrypted tokens from the user's balance.
+* `privateTransfer(to: string, amount: bigint, message?: string): Promise<{ transactionHash: string, receiverEncryptedAmount: string[], senderEncryptedAmount: string[] }>`
+Transfers encrypted tokens to another user.
+* `withdraw(amount: bigint, message?: string): Promise<{ transactionHash: string }>`
+Withdraws a specified amount of tokens from the user's balance to underlying ERC20 token address. Only available in converter mode.
+* `deposit(amount: bigint, message?: string): Promise<{ transactionHash: string }>`
+Converts a specified amount of ERC20 tokens to private Encrypted ERC tokens. Only available in converter mode.
+* `decryptMessage(transactionHash: string): Promise<{ decryptedMessage: string, messageType: string, messageFrom: string, messageTo: string }>`
+Decrypts the private message from the transaction hash. messageType points the operation that the message included in.
+* `refetchBalance(): void`
+Refetches and updates the user's encrypted and decrypted balances from the contract.
+
+***
+
+For any additional questions, please view our other knowledge base articles or contact a support team member via the chat button. Examples are for illustrative purposes only.
+
+[Learn More About AvaCloud](https://avacloud.io/) | [Download Case Studies](https://avacloud.io/case-studies) | [Schedule an AvaCloud Demo](https://avacloud.io/demo)
+
+Deployed example: https://www.3dent.xyz/?mode=standalone
+
+Github: https://github.com/BeratOz01/3dent/tree/main
+
+Extracted website:
+eERC is a privacy-preserving ERC-20 token that lets users mint, transfer, and burn — without exposing balances or amounts on-chain.
+There are two modes of eERC: Standalone Mode allows direct minting and management of encrypted tokens, while Converter Mode wraps existing ERC-20 tokens into encrypted form — allowing you to deposit and later withdraw standard tokens privately.
+Standalone Mode
+
+Behaves like a standard token with privacy features — users can mint, transfer, and burn directly.
+Converter Mode
+
+Wraps an existing ERC-20. Users deposit ERC-20 tokens and receive their encrypted equivalents.
+All encrypted balances are tied to your wallet's public key, and every interaction with the contract (mint, transfer, burn, withdraw) is processed through cryptographic proofs and homomorphic operations. This ensures your private balance is updated correctly — without ever exposing sensitive data to the blockchain. eERC also includes a powerful auditability feature for regulatory compliance. Designated authorities can access transaction details using special auditor keys — allowing for oversight without compromising user privacy.
+Want to learn more? See the full documentation on our GitBook →
+The contracts below are deployed on the Avalanche Fuji Testnet. You can connect your wallet to the Fuji network and interact with these contracts directly — mint, transfer, burn, or convert depending on the mode.
+
+📜 Contracts
+Standalone Mode
+0x5E9c6F952fB9615583182e70eDDC4e6E4E0aC0e0
+See on Explorer →
+Converter Mode
+0x372dAB27c8d223Af11C858ea00037Dc03053B22E
+See on Explorer →
+Dummy ERC-20
+0xb0Fe621B4Bd7fe4975f7c58E3D6ADaEb2a2A35CD
+See on Explorer →
+🔗 Connect Wallet
+Connect Wallet
+💧 Need test tokens? You can get AVAX on the Fuji testnet from the Avalanche Faucet →
+🔑 Generate Decryption Key
+This key is derived by signing a predefined message with your wallet. It is never uploaded or shared.
+
+Generate Decryption Key
+🧾 Registration
+Before starting using eERC, you need to register your wallet. This process:
+Creates a unique encryption key to be used for encrypted transactions
+Links your wallet address to this public key securely
+Enables you to receive and manage encrypted tokens
+The registration is a one-time process that happens on-chain. Once completed, you'll be able to mint, transfer, and burn tokens privately. But key is generated locally, so you can use it on any device. Private keys are never uploaded or shared — they stay entirely local in your browser.
+Register Wallet
+📜 eERC Contract
+Standalone Mode
+|
+Converter Mode
+Contract Address
+0x5E9c6F952fB9615583182e70eDDC4e6E4E0aC0e0
+Owner
+0xb73c17CC80527e300D122263D67144112F92e804
+Mode
+Standalone
+Decimals
+2
+Token Name
+Token Symbol
+TEST
+Is Auditor Key Set
+Yes
+Auditor Public Key (hex)
+0xa8b2d1acbd7dbd138d3114972d3c5b34c104a6b073aace27f328890d8c8195d1
+User Public Key (hex)
+N/A
+Show Encrypted Points
+Decrypted Balance
+0 TEST
+All operations below are fully encrypted using elliptic curve cryptography. When you mint, transfer, or burn tokens, the data is encrypted with your public key so that only you can decrypt and view your balances. For transfer operations, the recipient’s public key will be automatically fetched from the protocol to encrypt the tokens for them.
+
+Private Mint
+
+In private minting, a zero-knowledge proof is generated to prove that the encrypted amount is valid with respect to your public key using ElGamal encryption. The resulting ElGamal ciphertext is homomorphically added to your current balance, allowing you to increase your encrypted balance without revealing any amounts. In addition to the ElGamal ciphertext, the amount is also encrypted using Poseidon-based encryption, enabling efficient client-side decryption without solving the discrete logarithm problem.
+
+Mint
+Private Burn
+
+To burn tokens, the protocol performs a private transfer to a special identity account with public key (0, 1) — the identity point on the BabyJubjub curve. This dummy account has no corresponding private key, making the transferred tokens permanently inaccessible. This mechanism ensures that tokens are cryptographically removed from circulation without breaking the encrypted balance model.
+
+Burn
+Private Transfer
+
+In a private transfer, the recipient’s public key is fetched from the protocol and used to encrypt the transferred amount. The sender proves ownership of their current balance by decrypting their ElGamal-encrypted balance and generating a zero-knowledge proof over it. At the same time, the sender creates a new ElGamal ciphertext representing -amount, which is homomorphically applied to reduce their balance. Thanks to ElGamal’s additive homomorphism, this update can be performed without revealing any values on-chain. Meanwhile, Poseidon encryption creates efficient ciphertexts that allow both sender and recipient to quickly decrypt their updated balances locally without solving complex discrete logarithm problems.

@@ -1,0 +1,96 @@
+{
+  "name": "ShadowFlow eERC20 Integration Configuration",
+  "description": "Configuration extracted from 3dent example for ShadowFlow campaign integration",
+  "network": {
+    "name": "Avalanche Fuji Testnet",
+    "chainId": 43113,
+    "rpcUrl": "https://api.avax-test.network/ext/bc/C/rpc",
+    "explorerUrl": "https://testnet.snowtrace.io",
+    "faucetUrl": "https://core.app/en/tools/testnet-faucet/?subnet=c&token=c"
+  },
+  "contracts": {
+    "eerc_standalone": {
+      "address": "0x5E9c6F952fB9615583182e70eDDC4e6E4E0aC0e0",
+      "description": "Standalone eERC20 contract for direct minting/burning",
+      "explorerUrl": "https://testnet.snowtrace.io/address/0x5E9c6F952fB9615583182e70eDDC4e6E4E0aC0e0"
+    },
+    "eerc_converter": {
+      "address": "0x372dAB27c8d223Af11C858ea00037Dc03053B22E",
+      "description": "Converter eERC20 contract for ERC20 wrapping",
+      "explorerUrl": "https://testnet.snowtrace.io/address/0x372dAB27c8d223Af11C858ea00037Dc03053B22E"
+    },
+    "demo_erc20": {
+      "address": "0xb0Fe621B4Bd7fe4975f7c58E3D6ADaEb2a2A35CD",
+      "description": "Demo ERC20 token for converter mode testing",
+      "explorerUrl": "https://testnet.snowtrace.io/address/0xb0Fe621B4Bd7fe4975f7c58E3D6ADaEb2a2A35CD"
+    }
+  },
+  "circuits": {
+    "baseUrl": "/circuits/",
+    "files": {
+      "register": {
+        "wasm": "RegistrationCircuit.wasm",
+        "zkey": "RegistrationCircuit.groth16.zkey",
+        "description": "Circuit for user registration with eERC20 system"
+      },
+      "mint": {
+        "wasm": "MintCircuit.wasm",
+        "zkey": "MintCircuit.groth16.zkey",
+        "description": "Circuit for minting encrypted tokens"
+      },
+      "transfer": {
+        "wasm": "TransferCircuit.wasm",
+        "zkey": "TransferCircuit.groth16.zkey",
+        "description": "Circuit for private transfers between users"
+      },
+      "withdraw": {
+        "wasm": "WithdrawCircuit.wasm",
+        "zkey": "WithdrawCircuit.groth16.zkey",
+        "description": "Circuit for withdrawing encrypted tokens"
+      }
+    }
+  },
+  "sdk": {
+    "package": "@avalabs/eerc-sdk",
+    "version": "1.0.0",
+    "dependencies": {
+      "wagmi": "2.14.16",
+      "viem": "2.26.3",
+      "@tanstack/react-query": "5.72.2"
+    }
+  },
+  "shadowflow_integration": {
+    "mode": "standalone",
+    "contract_address": "0x5E9c6F952fB9615583182e70eDDC4e6E4E0aC0e0",
+    "message_formats": {
+      "donation": "DONATION:{campaignAddress}:{userMessage}",
+      "withdrawal": "WITHDRAWAL:{campaignAddress}"
+    },
+    "workflow": [
+      "1. User registers with eERC20 system (one-time)",
+      "2. User generates decryption key locally",
+      "3. Campaign creator creates campaign via CampaignFactory",
+      "4. Donor uses privateTransfer() with donation message format",
+      "5. Donor calls campaign.registerDonation(txHash)",
+      "6. Creator views encrypted balance and decrypts messages",
+      "7. Creator uses privateTransfer() to self for withdrawal",
+      "8. Creator calls campaign.registerWithdrawal(txHash)"
+    ]
+  },
+  "testing": {
+    "required_setup": [
+      "Connect wallet to Avalanche Fuji testnet",
+      "Get AVAX from faucet for gas fees",
+      "Register with eERC20 system",
+      "Generate decryption key",
+      "Test basic privateTransfer functionality"
+    ],
+    "test_scenarios": [
+      "User registration and key generation",
+      "Private transfer with message encoding",
+      "Balance decryption and message reading",
+      "Campaign contract integration",
+      "End-to-end donation flow"
+    ]
+  }
+}
