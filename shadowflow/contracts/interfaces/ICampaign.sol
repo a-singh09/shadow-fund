@@ -168,4 +168,9 @@ interface ICampaign {
      * @return Address of the campaign creator
      */
     function getCreator() external view returns (address);
+
+    /**
+     * @dev Update campaign status (can be called by creator or when deadline passes)
+     */
+    function updateStatus() external;
 }

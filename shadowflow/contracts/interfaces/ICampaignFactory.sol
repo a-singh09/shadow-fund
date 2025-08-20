@@ -84,4 +84,14 @@ interface ICampaignFactory {
     function isCampaignRegistered(
         address campaignAddress
     ) external view returns (bool);
+
+    /**
+     * @dev Get campaign statistics
+     * @return totalCampaigns Total number of campaigns
+     * @return activeCampaigns Number of currently active campaigns
+     */
+    function getCampaignStats()
+        external
+        view
+        returns (uint256 totalCampaigns, uint256 activeCampaigns);
 }
