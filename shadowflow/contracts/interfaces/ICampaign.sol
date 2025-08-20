@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 /**
  * @title ICampaign
@@ -101,6 +101,26 @@ interface ICampaign {
         bool isActive,
         uint256 timestamp
     );
+
+    // ============ Initialization ============
+
+    /**
+     * @dev Initialize the campaign (called by factory)
+     * @param creator Address of the campaign creator
+     * @param title Campaign title
+     * @param description Campaign description
+     * @param encryptedGoal Encrypted target amount
+     * @param deadline Campaign deadline timestamp
+     * @param privacyManagerAddress Address of the privacy manager
+     */
+    function initialize(
+        address creator,
+        string memory title,
+        string memory description,
+        bytes memory encryptedGoal,
+        uint256 deadline,
+        address privacyManagerAddress
+    ) external;
 
     // ============ Core Functions ============
 

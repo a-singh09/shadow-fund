@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 /**
  * @title IPrivacyManager
@@ -93,4 +93,9 @@ interface IPrivacyManager {
     function validateProofFormat(
         bytes memory proof
     ) external pure returns (bool);
+
+    // Campaign authorization functions
+    function authorizeCampaign(address campaign) external;
+
+    function revokeCampaign(address campaign) external;
 }
