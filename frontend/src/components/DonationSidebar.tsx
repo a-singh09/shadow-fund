@@ -59,12 +59,21 @@ const DonationSidebar = ({
     isRegistered,
     useEncryptedBalance,
     isLoading: isEERCLoading,
+    isInitialized,
   } = useEERC("standalone");
   const { registerDonation, isLoading: isCampaignLoading } =
     useCampaign(campaignAddress);
 
-  // Get encrypted balance hook
-  const { decryptedBalance, privateTransfer, decimals } = useEncryptedBalance();
+  // Get encrypted balance hook - only call if useEncryptedBalance is available
+  const encryptedBalanceHook = useEncryptedBalance
+    ? useEncryptedBalance()
+    : null;
+  const { decryptedBalance, privateTransfer, decimals } =
+    encryptedBalanceHook || {
+      decryptedBalance: null,
+      privateTransfer: null,
+      decimals: null,
+    };
 
   const predefinedAmounts = [10, 25, 50, 100];
 
@@ -110,11 +119,29 @@ const DonationSidebar = ({
       return;
     }
 
+    if (!isInitialized) {
+      toast({
+        title: "eERC20 Not Initialized",
+        description: "eERC20 system is still initializing. Please wait.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!isRegistered) {
       toast({
         title: "eERC20 Registration Required",
         description:
           "Please register with eERC20 first to make private donations.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!privateTransfer) {
+      toast({
+        title: "Private Transfer Not Available",
+        description: "Private transfer functionality is not available.",
         variant: "destructive",
       });
       return;
@@ -146,6 +173,10 @@ const DonationSidebar = ({
         title: "Processing Donation",
         description: "Initiating encrypted transfer...",
       });
+
+      if (!privateTransfer) {
+        throw new Error("Private transfer function not available");
+      }
 
       const transferResult = await privateTransfer(
         campaign.creator,
@@ -302,7 +333,16 @@ const DonationSidebar = ({
           </div>
         )}
 
-        {isConnected && !isRegistered && (
+        {isConnected && !isInitialized && (
+          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+            <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Initializing eERC20 system...</span>
+            </div>
+          </div>
+        )}
+
+        {isConnected && isInitialized && !isRegistered && (
           <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
             <div className="flex items-center space-x-2 text-blue-400 text-sm">
               <Shield className="w-4 h-4" />
@@ -312,22 +352,26 @@ const DonationSidebar = ({
         )}
 
         {/* Balance Display */}
-        {isConnected && isRegistered && decryptedBalance !== undefined && (
-          <div className="mb-6 p-4 glass-subtle rounded-xl border border-gray-700">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-400">
-                Your eERC20 Balance:
-              </span>
-              <span className="text-white font-medium">
-                {(
-                  Number(decryptedBalance) /
-                  Math.pow(10, Number(decimals || 2n))
-                ).toFixed(2)}{" "}
-                TEST
-              </span>
+        {isConnected &&
+          isInitialized &&
+          isRegistered &&
+          decryptedBalance !== null &&
+          decryptedBalance !== undefined && (
+            <div className="mb-6 p-4 glass-subtle rounded-xl border border-gray-700">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">
+                  Your eERC20 Balance:
+                </span>
+                <span className="text-white font-medium">
+                  {(
+                    Number(decryptedBalance) /
+                    Math.pow(10, Number(decimals || 2n))
+                  ).toFixed(2)}{" "}
+                  TEST
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Donation Form */}
         <div className="space-y-6">
@@ -412,10 +456,12 @@ const DonationSidebar = ({
               isDonating ||
               donationStep === "processing" ||
               !isConnected ||
+              !isInitialized ||
               !isRegistered ||
               !donationAmount ||
               parseFloat(donationAmount) <= 0 ||
-              isEERCLoading
+              isEERCLoading ||
+              !privateTransfer
             }
             className="w-full btn-primary py-4 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >

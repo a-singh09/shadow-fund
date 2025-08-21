@@ -94,7 +94,7 @@ const WithdrawFunds = ({
     amount,
     campaignAddress,
     decryptedBalance,
-    privateTransfer,
+    withdraw,
     onWithdrawComplete,
   ]);
 
