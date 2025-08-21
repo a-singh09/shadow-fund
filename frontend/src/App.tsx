@@ -1,8 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { WagmiProvider } from "@/providers/WagmiProvider";
 import Index from "./pages/Index";
 import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
@@ -12,10 +12,8 @@ import DashboardWithdraw from "./pages/DashboardWithdraw";
 import DashboardAnalyticsPage from "./pages/DashboardAnalyticsPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <WagmiProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -27,12 +25,15 @@ const App = () => (
           <Route path="/create-campaign" element={<CreateCampaign />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/withdraw" element={<DashboardWithdraw />} />
-          <Route path="/dashboard/analytics" element={<DashboardAnalyticsPage />} />
+          <Route
+            path="/dashboard/analytics"
+            element={<DashboardAnalyticsPage />}
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </WagmiProvider>
 );
 
 export default App;
