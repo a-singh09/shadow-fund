@@ -18,6 +18,7 @@ import { useCampaignFactory } from "@/hooks/useCampaignFactory";
 import { useToast } from "@/hooks/use-toast";
 import WalletConnectionModal from "./WalletConnectionModal";
 import EeRC20RegistrationFlow from "./EeRC20RegistrationFlow";
+import ImageUpload from "./ImageUpload";
 
 const CampaignForm = () => {
   const navigate = useNavigate();
@@ -45,7 +46,8 @@ const CampaignForm = () => {
     duration: "",
     tags: [],
     location: "",
-    heroImage: null,
+    heroImage: "",
+    heroImageHash: "",
     galleryImages: [],
     videoUrl: "",
   });
@@ -399,20 +401,25 @@ const CampaignForm = () => {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Hero Image *
+              <label className="block text-sm font-medium text-gray-300 mb-4">
+                Campaign Image
               </label>
-              <div className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center hover:border-red-500/50 transition-all duration-300">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-300 mb-2">
-                  Drag and drop your hero image here
-                </p>
-                <p className="text-sm text-gray-500 mb-4">
-                  or click to browse (max 5MB)
-                </p>
-                <button type="button" className="btn-secondary px-6 py-2">
-                  Choose File
-                </button>
+              <ImageUpload
+                onImageUploaded={(hash, url) => {
+                  setFormData({
+                    ...formData,
+                    heroImageHash: hash,
+                    heroImage: url,
+                  });
+                }}
+                currentImage={formData.heroImage}
+                className="mb-4"
+              />
+              <div className="text-sm text-gray-400">
+                <p>• Upload a compelling image that represents your campaign</p>
+                <p>• Images are stored on IPFS for decentralized access</p>
+                <p>• Recommended size: 800x400px or larger</p>
+                <p>• Supported formats: PNG, JPG, GIF (max 5MB)</p>
               </div>
             </div>
 
@@ -429,6 +436,10 @@ const CampaignForm = () => {
                 placeholder="YouTube, Vimeo, or other video URL"
                 className="w-full px-4 py-3 glass rounded-xl border border-red-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-300"
               />
+              <div className="text-sm text-gray-400 mt-2">
+                Add a video to better explain your project and connect with
+                supporters
+              </div>
             </div>
           </div>
         );

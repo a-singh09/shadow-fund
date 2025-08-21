@@ -226,7 +226,7 @@ const Campaigns = () => {
                       creator={formatCreator(campaign.creator)}
                       description={campaign.description}
                       category="Privacy" // Default category for now
-                      image="/api/placeholder/400/200" // Placeholder image
+                      image="" // No image by default - will show fallback
                       supportersCount={Number(campaign.donationCount)}
                       daysLeft={getDaysLeft(campaign.deadline)}
                       progressPercentage={getProgressPercentage(

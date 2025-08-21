@@ -1,5 +1,14 @@
-import { Heart, Clock, Users, ArrowRight } from "lucide-react";
+import {
+  Heart,
+  Clock,
+  Users,
+  ArrowRight,
+  Image as ImageIcon,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { getIPFSUrl } from "@/lib/ipfs";
+import { getCampaignFallbackImage } from "@/lib/placeholders";
 
 interface CampaignCardProps {
   id: string;
@@ -26,15 +35,66 @@ const CampaignCard = ({
   progressPercentage,
   isActive = true,
 }: CampaignCardProps) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+
+  // Get proper image URL (handle IPFS hashes and data URLs)
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return "";
+
+    // If it's a data URL, return as-is
+    if (imageUrl.startsWith("data:")) {
+      return imageUrl;
+    }
+
+    // If it's an IPFS hash, convert to URL
+    if (imageUrl.startsWith("Qm") || imageUrl.startsWith("ipfs://")) {
+      return getIPFSUrl(imageUrl);
+    }
+
+    // Return as-is for regular URLs
+    return imageUrl;
+  };
+
+  const imageUrl = getImageUrl(image);
+  const fallbackImage = getCampaignFallbackImage(title, category);
+  const shouldShowFallback = !imageUrl || imageError;
   return (
     <div className="glass rounded-2xl border border-red-500/20 overflow-hidden hover-lift group">
       {/* Campaign Image */}
-      <div className="relative h-48 overflow-hidden">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+      <div className="relative h-48 overflow-hidden bg-gray-800">
+        {shouldShowFallback ? (
+          // Fallback when no image or image fails to load
+          <img
+            src={fallbackImage}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <>
+            <img
+              src={imageUrl}
+              alt={title}
+              className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+                imageLoading ? "opacity-0" : "opacity-100"
+              }`}
+              onLoad={() => setImageLoading(false)}
+              onError={() => {
+                setImageError(true);
+                setImageLoading(false);
+              }}
+            />
+            {/* Loading placeholder */}
+            {imageLoading && (
+              <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <div className="w-8 h-8 border-2 border-gray-600 border-t-red-500 rounded-full animate-spin mx-auto mb-2"></div>
+                  <div className="text-sm">Loading...</div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
         {/* Status Badge */}
