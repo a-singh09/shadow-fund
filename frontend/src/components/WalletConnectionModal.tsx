@@ -15,7 +15,11 @@ const WalletConnectionModal = ({
   const { connect, connectors, isPending } = useConnect();
   const { isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { isRegistered, register, isLoading: isEERCLoading } = useEERC();
+  const {
+    isRegistered,
+    register,
+    isLoading: isEERCLoading,
+  } = useEERC("standalone");
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedConnector, setSelectedConnector] = useState<string | null>(

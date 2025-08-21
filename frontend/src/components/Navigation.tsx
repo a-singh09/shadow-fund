@@ -23,7 +23,7 @@ const Navigation = () => {
 
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { isRegistered } = useEERC();
+  const { isRegistered } = useEERC("standalone");
   const location = useLocation();
 
   const menuItems = [
@@ -69,7 +69,7 @@ const Navigation = () => {
                 location.pathname === item.route ||
                 (item.route === "/" && location.pathname === "/");
 
-              if (item.authRequired && !isWalletConnected) return null;
+              if (item.authRequired && !isConnected) return null;
 
               return (
                 <Link

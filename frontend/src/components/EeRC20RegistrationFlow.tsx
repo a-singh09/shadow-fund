@@ -22,7 +22,7 @@ const EeRC20RegistrationFlow = ({
   onClose,
 }: EeRC20RegistrationFlowProps) => {
   const { isConnected } = useAccount();
-  const { isRegistered, register, isLoading, error } = useEERC();
+  const { isRegistered, register, isLoading, error } = useEERC("standalone");
   const [currentStep, setCurrentStep] = useState(1);
   const [registrationComplete, setRegistrationComplete] = useState(false);
 
