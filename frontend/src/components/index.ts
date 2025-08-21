@@ -20,6 +20,11 @@ export { default as DashboardStats } from "./DashboardStats";
 export { default as DonationSidebar } from "./DonationSidebar";
 export { default as RecentActivity } from "./RecentActivity";
 
+// Campaign Management Components
+export { default as CampaignManagement } from "./CampaignManagement";
+export { default as DonationHistory } from "./DonationHistory";
+export { default as CampaignWithdrawal } from "./CampaignWithdrawal";
+
 // Layout Components
 export { default as HeroSection } from "./HeroSection";
 export { default as FeaturesSection } from "./FeaturesSection";
