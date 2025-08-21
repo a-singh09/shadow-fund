@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import { useAccount, useDisconnect } from "wagmi";
 import {
@@ -208,10 +209,14 @@ const Navigation = () => {
         )}
       </div>
 
-      <WalletConnectionModal
-        isOpen={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
-      />
+      {isWalletModalOpen &&
+        createPortal(
+          <WalletConnectionModal
+            isOpen={isWalletModalOpen}
+            onClose={() => setIsWalletModalOpen(false)}
+          />,
+          document.body,
+        )}
     </nav>
   );
 };

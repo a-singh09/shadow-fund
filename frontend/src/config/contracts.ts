@@ -5,8 +5,8 @@ export const CONTRACTS = {
   EERC_CONVERTER: "0x372dAB27c8d223Af11C858ea00037Dc03053B22E",
   ERC20: "0xb0Fe621B4Bd7fe4975f7c58E3D6ADaEb2a2A35CD",
 
-  // ShadowFlow contracts (to be deployed - needs AVAX for gas)
-  CAMPAIGN_FACTORY: "0x0000000000000000000000000000000000000000", // Placeholder - deployment failed due to insufficient funds
+  // ShadowFlow contracts
+  CAMPAIGN_FACTORY: "0xE253D8a90c762620b99848a7774CeA3201D904Fc",
 } as const;
 
 // Circuit configuration for eERC20 zero-knowledge proofs
