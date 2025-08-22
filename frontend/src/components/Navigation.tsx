@@ -61,7 +61,7 @@ const Navigation = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
             <Shield className="w-8 h-8 text-red-400 group-hover:text-red-300 transition-colors duration-300" />
-            <span className="text-2xl font-bold gradient-text">ShadowFlow</span>
+            <span className="text-2xl font-bold gradient-text">ShadowFund</span>
           </Link>
 
           {/* Desktop Menu */}

@@ -17,7 +17,7 @@ export function generatePlaceholderImage(
     education: "3b82f6,06b6d4", // Blue to cyan
     health: "10b981,059669", // Green
     environment: "22c55e,16a34a", // Light green
-    privacy: "ef4444,dc2626", // Red theme (default for ShadowFlow)
+    privacy: "ef4444,dc2626", // Red theme (default for ShadowFund)
     general: "6b7280,4b5563", // Gray
   };
 

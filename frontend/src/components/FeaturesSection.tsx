@@ -1,31 +1,35 @@
-import { ShieldCheck, Zap, EyeOff, BarChart3 } from 'lucide-react';
+import { ShieldCheck, Zap, EyeOff, BarChart3 } from "lucide-react";
 
 const FeaturesSection = () => {
   const features = [
     {
       icon: ShieldCheck,
       title: "Zero-Knowledge Privacy",
-      description: "Donation amounts remain completely encrypted using Avalanche's battle-tested eERC20 protocol. Only you and the creator can see your contribution.",
-      highlight: "100% Private"
+      description:
+        "Donation amounts remain completely encrypted using Avalanche's battle-tested eERC20 protocol. Only you and the creator can see your contribution.",
+      highlight: "100% Private",
     },
     {
       icon: Zap,
       title: "Lightning Fast",
-      description: "Sub-second transaction confirmations on Avalanche's high-performance network. No more waiting for slow blockchain confirmations.",
-      highlight: "<1s Transfers"
+      description:
+        "Sub-second transaction confirmations on Avalanche's high-performance network. No more waiting for slow blockchain confirmations.",
+      highlight: "<1s Transfers",
     },
     {
       icon: EyeOff,
       title: "Anonymous Support",
-      description: "Support causes you believe in without revealing your identity. Your privacy is guaranteed by cryptographic proofs.",
-      highlight: "Full Anonymity"
+      description:
+        "Support causes you believe in without revealing your identity. Your privacy is guaranteed by cryptographic proofs.",
+      highlight: "Full Anonymity",
     },
     {
       icon: BarChart3,
       title: "Smart Analytics",
-      description: "Campaign creators get powerful insights and donation tracking while preserving complete donor privacy through encrypted data.",
-      highlight: "Privacy-Safe Insights"
-    }
+      description:
+        "Campaign creators get powerful insights and donation tracking while preserving complete donor privacy through encrypted data.",
+      highlight: "Privacy-Safe Insights",
+    },
   ];
 
   return (
@@ -34,7 +38,7 @@ const FeaturesSection = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
-            Why Choose <span className="gradient-text">ShadowFlow</span>?
+            Why Choose <span className="gradient-text">ShadowFund</span>?
           </h2>
           <p className="text-xl text-gray-400 leading-relaxed">
             Privacy-first crowdfunding with enterprise-grade security
@@ -45,7 +49,7 @@ const FeaturesSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
-            
+
             return (
               <div
                 key={index}

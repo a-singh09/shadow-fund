@@ -1,17 +1,17 @@
-import { Link } from 'react-router-dom';
-import { Shield, Twitter, MessageCircle, Github } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { Shield, Twitter, MessageCircle, Github } from "lucide-react";
 
 const Footer = () => {
   const footerSections = [
     {
-      title: "ShadowFlow",
+      title: "ShadowFund",
       description: "Privacy-first crowdfunding powered by Avalanche",
       links: [
         { text: "About Us", route: "/about" },
         { text: "How It Works", route: "/#how-it-works" },
         { text: "Privacy Policy", route: "/privacy" },
-        { text: "Terms of Service", route: "/terms" }
-      ]
+        { text: "Terms of Service", route: "/terms" },
+      ],
     },
     {
       title: "For Creators",
@@ -19,8 +19,8 @@ const Footer = () => {
         { text: "Create Campaign", route: "/create-campaign" },
         { text: "Creator Guide", route: "/guide" },
         { text: "Best Practices", route: "/best-practices" },
-        { text: "Success Stories", route: "/stories" }
-      ]
+        { text: "Success Stories", route: "/stories" },
+      ],
     },
     {
       title: "Technology",
@@ -28,24 +28,44 @@ const Footer = () => {
         { text: "Avalanche Integration", route: "/avalanche" },
         { text: "eERC20 Protocol", route: "/eerc20" },
         { text: "Smart Contracts", route: "/contracts" },
-        { text: "Security Audit", route: "/security" }
-      ]
+        { text: "Security Audit", route: "/security" },
+      ],
     },
     {
       title: "Community",
       links: [
-        { text: "Discord", url: "https://discord.gg/shadowflow", external: true },
-        { text: "Twitter", url: "https://twitter.com/shadowflow", external: true },
-        { text: "GitHub", url: "https://github.com/shadowflow", external: true },
-        { text: "Blog", route: "/blog" }
-      ]
-    }
+        {
+          text: "Discord",
+          url: "https://discord.gg/ShadowFund",
+          external: true,
+        },
+        {
+          text: "Twitter",
+          url: "https://twitter.com/ShadowFund",
+          external: true,
+        },
+        {
+          text: "GitHub",
+          url: "https://github.com/ShadowFund",
+          external: true,
+        },
+        { text: "Blog", route: "/blog" },
+      ],
+    },
   ];
 
   const socialLinks = [
-    { platform: "Twitter", icon: Twitter, url: "https://twitter.com/shadowflow" },
-    { platform: "Discord", icon: MessageCircle, url: "https://discord.gg/shadowflow" },
-    { platform: "GitHub", icon: Github, url: "https://github.com/shadowflow" }
+    {
+      platform: "Twitter",
+      icon: Twitter,
+      url: "https://twitter.com/ShadowFund",
+    },
+    {
+      platform: "Discord",
+      icon: MessageCircle,
+      url: "https://discord.gg/ShadowFund",
+    },
+    { platform: "GitHub", icon: Github, url: "https://github.com/ShadowFund" },
   ];
 
   return (
@@ -55,12 +75,16 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {footerSections.map((section, index) => (
             <div key={section.title} className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">{section.title}</h3>
-              
+              <h3 className="text-lg font-semibold text-white">
+                {section.title}
+              </h3>
+
               {section.description && (
-                <p className="text-sm text-gray-400 mb-4">{section.description}</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  {section.description}
+                </p>
               )}
-              
+
               <ul className="space-y-2">
                 {section.links.map((link) => (
                   <li key={link.text}>
@@ -75,7 +99,7 @@ const Footer = () => {
                       </a>
                     ) : (
                       <Link
-                        to={link.route || '#'}
+                        to={link.route || "#"}
                         className="text-sm text-gray-400 hover:text-red-400 transition-colors duration-300"
                       >
                         {link.text}
@@ -94,10 +118,12 @@ const Footer = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Shield className="w-6 h-6 text-red-400" />
-              <span className="text-lg font-bold gradient-text">ShadowFlow</span>
+              <span className="text-lg font-bold gradient-text">
+                ShadowFund
+              </span>
             </div>
             <div className="text-sm text-gray-400">
-              © 2024 ShadowFlow. Privacy-first crowdfunding.
+              © 2025 ShadowFund. Privacy-first crowdfunding.
             </div>
           </div>
 

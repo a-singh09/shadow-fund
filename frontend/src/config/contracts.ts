@@ -23,7 +23,7 @@ export const CONTRACTS = {
     REGISTRAR: "0x986B86864e5c0E8a6dDA367D099E8c52E89eBFd0",
   },
 
-  // ShadowFlow contracts (mode-independent)
+  // ShadowFund contracts (mode-independent)
   CAMPAIGN_FACTORY: "0xcfe97D225eF6DB8ee6677A871aB1b6786a4AAfC4",
 } as const;
 

@@ -71,7 +71,7 @@ const EeRC20RegistrationFlow = ({
     {
       step: 4,
       title: "Setup Complete!",
-      description: "You're all set to use ShadowFlow's privacy features",
+      description: "You're all set to use ShadowFund's privacy features",
       icon: PartyPopper,
       color: "purple",
       nextSteps: [
@@ -246,7 +246,7 @@ const EeRC20RegistrationFlow = ({
               onClick={onComplete}
               className="btn-primary px-8 py-3 font-semibold hover-lift"
             >
-              Start Using ShadowFlow
+              Start Using ShadowFund
             </button>
           )}
         </div>

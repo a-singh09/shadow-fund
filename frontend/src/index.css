@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ShadowFlow Design System - Privacy-first crowdfunding platform */
+/* ShadowFund Design System - Privacy-first crowdfunding platform */
 @layer base {
   :root {
     /* Dark theme optimized for privacy/crypto applications */

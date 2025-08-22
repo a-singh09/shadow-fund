@@ -76,8 +76,8 @@ const WalletConnectionModal = ({
           </h2>
           <p className="text-gray-400">
             {isConnected
-              ? "Complete your setup to start using ShadowFlow"
-              : "Choose your preferred wallet to start using ShadowFlow"}
+              ? "Complete your setup to start using ShadowFund"
+              : "Choose your preferred wallet to start using ShadowFund"}
           </p>
         </div>
 
@@ -149,7 +149,7 @@ const WalletConnectionModal = ({
                   onClick={onClose}
                   className="w-full p-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
                 >
-                  Continue to ShadowFlow
+                  Continue to ShadowFund
                 </button>
               </div>
             )}
