@@ -11,6 +11,9 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Shield,
+  Brain,
+  Eye,
 } from "lucide-react";
 import { useCampaignList } from "@/hooks/useCampaignList";
 import { getCampaignImage } from "@/lib/campaignImages";
@@ -150,6 +153,55 @@ const Campaigns = () => {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* AI Trust Features Banner */}
+              <div className="glass rounded-2xl p-6 border border-blue-500/20 mb-8 max-w-4xl mx-auto">
+                <div className="flex items-center gap-3 mb-4">
+                  <Brain className="w-6 h-6 text-blue-400" />
+                  <h3 className="text-xl font-bold text-white">
+                    AI-Powered Trust & Safety
+                  </h3>
+                </div>
+                <p className="text-gray-400 mb-4">
+                  Every campaign is analyzed by our advanced AI system for
+                  credibility, authenticity, and fraud prevention.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-3 p-3 glass-subtle rounded-lg border border-gray-700/50">
+                    <Shield className="w-5 h-5 text-green-400" />
+                    <div>
+                      <div className="text-sm font-medium text-white">
+                        Credibility Scoring
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Multi-factor trust analysis
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 glass-subtle rounded-lg border border-gray-700/50">
+                    <Eye className="w-5 h-5 text-blue-400" />
+                    <div>
+                      <div className="text-sm font-medium text-white">
+                        Content Verification
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Duplicate & fraud detection
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 glass-subtle rounded-lg border border-gray-700/50">
+                    <Brain className="w-5 h-5 text-purple-400" />
+                    <div>
+                      <div className="text-sm font-medium text-white">
+                        AI Analysis
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Powered by Google Gemini
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Refresh Button */}

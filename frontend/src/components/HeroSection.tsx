@@ -43,8 +43,8 @@ const HeroSection = () => {
           {/* Description */}
           <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
             Built on Avalanche's lightning-fast network with zero-knowledge
-            encryption to ensure your financial privacy and protect against
-            censorship.
+            encryption and AI-powered trust verification to ensure your
+            financial privacy and protect against fraud and censorship.
           </p>
 
           {/* CTA Buttons */}
@@ -66,12 +66,12 @@ const HeroSection = () => {
           </div>
 
           {/* Trust Indicators */}
-          <div className="pt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl mx-auto">
+          <div className="pt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {[
               { label: "Built on Avalanche", value: "⚡" },
               { label: "Zero-Knowledge Privacy", value: "🔒" },
-              { label: "Open Source", value: "🔓" },
-              { label: "Audited Smart Contracts", value: "✅" },
+              { label: "AI Trust Verification", value: "🧠" },
+              { label: "Fraud Prevention", value: "🛡️" },
             ].map((indicator, index) => (
               <div key={index} className="text-center space-y-2">
                 <div className="text-2xl">{indicator.value}</div>

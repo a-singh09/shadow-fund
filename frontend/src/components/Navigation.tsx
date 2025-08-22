@@ -12,6 +12,7 @@ import {
   X,
   Wallet,
   ChevronDown,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WalletConnectionModal from "./WalletConnectionModal";
@@ -36,6 +37,7 @@ const Navigation = () => {
       icon: LayoutDashboard,
       authRequired: true,
     },
+
     { text: "How It Works", route: "/#how-it-works", icon: HelpCircle },
   ];
 

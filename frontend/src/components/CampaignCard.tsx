@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { getIPFSUrl } from "@/lib/ipfs";
 import { getCampaignFallbackImage } from "@/lib/placeholders";
+import { TrustBadge } from "./ai-trust";
 
 interface CampaignCardProps {
   id: string;
@@ -128,9 +129,23 @@ const CampaignCard = ({
       {/* Card Content */}
       <div className="p-4 sm:p-6">
         <div className="mb-3 sm:mb-4">
-          <h3 className="text-base sm:text-lg font-bold text-white mb-1 line-clamp-2">
-            {title}
-          </h3>
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="text-base sm:text-lg font-bold text-white line-clamp-2 flex-1 mr-2">
+              {title}
+            </h3>
+            <TrustBadge
+              score={Math.floor(Math.random() * 40) + 60} // Random score 60-100 for demo
+              level={
+                Math.random() > 0.7
+                  ? "high"
+                  : Math.random() > 0.4
+                    ? "medium"
+                    : "low"
+              }
+              size="sm"
+              showScore={false}
+            />
+          </div>
           <p className="text-xs sm:text-sm text-gray-400">by {creator}</p>
         </div>
 

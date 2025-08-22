@@ -20,6 +20,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AITrustDashboard } from "@/components/ai-trust";
 
 const CampaignDetail = () => {
   const { id } = useParams();
@@ -419,6 +420,9 @@ We believe that meaningful connections shouldn't come at the cost of your privac
                       ))}
                   </div>
                 </div>
+
+                {/* AI Trust Dashboard */}
+                <AITrustDashboard campaignId={id || "demo"} />
 
                 {/* Campaign Updates */}
                 <div className="glass rounded-2xl p-8 border border-red-500/20">

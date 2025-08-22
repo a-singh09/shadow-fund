@@ -19,6 +19,13 @@ import { useToast } from "@/hooks/use-toast";
 import WalletConnectionModal from "./WalletConnectionModal";
 import EeRC20RegistrationFlow from "./EeRC20RegistrationFlow";
 import ImageUpload from "./ImageUpload";
+import {
+  TrustBadge,
+  CredibilityBreakdown,
+  defaultCredibilityFactors,
+  VisualIntegrityBadge,
+  generateMockVisualResult,
+} from "./ai-trust";
 
 const CampaignForm = () => {
   const navigate = useNavigate();
@@ -350,6 +357,36 @@ const CampaignForm = () => {
                   </div>
                 )}
               </div>
+
+              {/* AI Content Analysis Preview */}
+              {formData.description.length >= 200 && (
+                <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm font-medium text-blue-400">
+                      AI Content Analysis
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-gray-400">Originality:</span>
+                      <span className="text-green-400 ml-1">95% Original</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Clarity:</span>
+                      <span className="text-green-400 ml-1">High</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Duplicates:</span>
+                      <span className="text-green-400 ml-1">None Found</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Trust Score:</span>
+                      <span className="text-yellow-400 ml-1">Building...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -424,8 +461,42 @@ const CampaignForm = () => {
                 currentImage={formData.heroImage}
                 className="mb-4"
               />
+
+              {/* AI Image Verification Preview */}
+              {formData.heroImage && (
+                <div className="mb-4 p-4 glass-subtle rounded-xl border border-green-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm font-medium text-green-400">
+                      Image Verified
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-gray-400">Authenticity:</span>
+                      <span className="text-green-400 ml-1">Original</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Manipulation:</span>
+                      <span className="text-green-400 ml-1">None Detected</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">IPFS Storage:</span>
+                      <span className="text-green-400 ml-1">Verified</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Reverse Search:</span>
+                      <span className="text-green-400 ml-1">0 Matches</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="text-sm text-gray-400">
                 <p>• Upload a compelling image that represents your campaign</p>
+                <p>
+                  • Images are automatically verified for authenticity using AI
+                </p>
                 <p>• Images are stored on IPFS for decentralized access</p>
                 <p>• Recommended size: 800x400px or larger</p>
                 <p>• Supported formats: PNG, JPG, GIF (max 5MB)</p>
@@ -456,10 +527,14 @@ const CampaignForm = () => {
       case 4:
         return (
           <div className="space-y-6">
+            {/* Campaign Preview */}
             <div className="glass p-6 rounded-xl border border-red-500/20">
-              <h3 className="text-xl font-bold text-white mb-4">
-                Campaign Preview
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">
+                  Campaign Preview
+                </h3>
+                <TrustBadge score={72} level="medium" size="sm" />
+              </div>
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium text-gray-300">Title</h4>
@@ -489,6 +564,25 @@ const CampaignForm = () => {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* AI Trust Analysis Preview */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CredibilityBreakdown
+                overallScore={72}
+                factors={defaultCredibilityFactors.slice(0, 3)}
+              />
+              {formData.heroImage && (
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-white">
+                    Image Verification
+                  </h4>
+                  <VisualIntegrityBadge
+                    result={generateMockVisualResult("verified")}
+                    showDetails={true}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );

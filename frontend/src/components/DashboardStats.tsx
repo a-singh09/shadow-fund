@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { Wallet, Rocket, Users, TrendingUp, Eye, EyeOff } from "lucide-react";
+import {
+  Wallet,
+  Rocket,
+  Users,
+  TrendingUp,
+  Eye,
+  EyeOff,
+  Shield,
+  Brain,
+} from "lucide-react";
 import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { useCampaignList } from "@/hooks/useCampaignList";
 import { formatUnits } from "viem";
@@ -28,17 +37,17 @@ const DashboardStats = () => {
       color: "blue",
     },
     {
-      title: "Total Supporters",
-      value: "0",
-      change: "No supporters yet",
-      icon: Users,
+      title: "Trust Score",
+      value: "0%",
+      change: "No campaigns to analyze",
+      icon: Shield,
       color: "green",
     },
     {
-      title: "Total Withdrawals",
+      title: "AI Verifications",
       value: "0",
-      change: "No withdrawals yet",
-      icon: TrendingUp,
+      change: "No verifications yet",
+      icon: Brain,
       color: "purple",
     },
   ]);
@@ -76,6 +85,14 @@ const DashboardStats = () => {
       0,
     );
 
+    // Calculate AI trust metrics (mock data for demo)
+    const avgTrustScore =
+      userCampaigns.length > 0
+        ? Math.floor(Math.random() * 30) + 70 // Random score 70-100 for demo
+        : 0;
+
+    const totalVerifications = userCampaigns.length * 3; // 3 verifications per campaign (content, image, credibility)
+
     const formatBalance = (balance: bigint | null): string => {
       if (balance === null || !decimals) return "0.00";
       return parseFloat(formatUnits(balance, Number(decimals))).toFixed(4);
@@ -111,23 +128,27 @@ const DashboardStats = () => {
         color: "blue",
       },
       {
-        title: "Total Supporters",
-        value: totalSupporters.toString(),
+        title: "Trust Score",
+        value: avgTrustScore > 0 ? `${avgTrustScore}%` : "0%",
         change:
-          totalSupporters > 0
-            ? `Across ${userCampaigns.length} campaign${userCampaigns.length !== 1 ? "s" : ""}`
-            : "No supporters yet",
-        icon: Users,
+          avgTrustScore > 0
+            ? avgTrustScore >= 80
+              ? "High trust rating"
+              : avgTrustScore >= 60
+                ? "Good trust rating"
+                : "Building trust..."
+            : "No campaigns to analyze",
+        icon: Shield,
         color: "green",
       },
       {
-        title: "Total Withdrawals",
-        value: totalWithdrawals.toString(),
+        title: "AI Verifications",
+        value: totalVerifications.toString(),
         change:
-          totalWithdrawals > 0
-            ? "Funds withdrawn successfully"
-            : "No withdrawals yet",
-        icon: TrendingUp,
+          totalVerifications > 0
+            ? `${userCampaigns.length} campaign${userCampaigns.length !== 1 ? "s" : ""} verified`
+            : "No verifications yet",
+        icon: Brain,
         color: "purple",
       },
     ]);

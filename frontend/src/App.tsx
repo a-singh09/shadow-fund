@@ -10,6 +10,7 @@ import CreateCampaign from "./pages/CreateCampaign";
 import Dashboard from "./pages/Dashboard";
 import DashboardWithdraw from "./pages/DashboardWithdraw";
 import DashboardAnalyticsPage from "./pages/DashboardAnalyticsPage";
+
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -29,6 +30,7 @@ const App = () => (
             path="/dashboard/analytics"
             element={<DashboardAnalyticsPage />}
           />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
