@@ -8,7 +8,7 @@ import {
   Loader,
   AlertCircle,
 } from "lucide-react";
-import { useEERC } from "@/hooks/useEERC";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 
 interface EeRC20RegistrationFlowProps {
   isOpen: boolean;
@@ -22,7 +22,11 @@ const EeRC20RegistrationFlow = ({
   onClose,
 }: EeRC20RegistrationFlowProps) => {
   const { isConnected } = useAccount();
-  const { isRegistered, register, isLoading, error } = useEERC("standalone");
+  const { isRegistered, registerWithKey, keyLoaded } =
+    useEERCWithKey("standalone");
+
+  const isLoading = !keyLoaded;
+  const error = null;
   const [currentStep, setCurrentStep] = useState(1);
   const [registrationComplete, setRegistrationComplete] = useState(false);
 
@@ -93,7 +97,7 @@ const EeRC20RegistrationFlow = ({
       setCurrentStep(2);
     } else if (currentStep === 2) {
       try {
-        await register();
+        await registerWithKey();
         setCurrentStep(3);
         // Simulate key generation step
         setTimeout(() => {

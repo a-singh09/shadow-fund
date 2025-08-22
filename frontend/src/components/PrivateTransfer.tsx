@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { Send, Loader, AlertCircle, CheckCircle, Shield } from "lucide-react";
-import { useEERC } from "@/hooks/useEERC";
-import { useEERCBalance } from "@/hooks/useEERCBalance";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { parseEther, formatEther, isAddress } from "viem";
 import { EXPLORER_BASE_URL_TX } from "@/config/contracts";
 
@@ -22,9 +21,11 @@ const PrivateTransfer = ({
   onTransferComplete,
   className = "",
 }: PrivateTransferProps) => {
-  const { isRegistered } = useEERC(mode);
-  const { decryptedBalance, privateTransfer, isLoading, error } =
-    useEERCBalance(mode);
+  const { isRegistered, decryptedBalance, privateTransfer } =
+    useEERCWithKey(mode);
+
+  const isLoading = false; // useEERCWithKey doesn't have separate loading state
+  const error = null; // useEERCWithKey doesn't have separate error state
 
   const [recipient, setRecipient] = useState(recipientAddress);
   const [amount, setAmount] = useState("");

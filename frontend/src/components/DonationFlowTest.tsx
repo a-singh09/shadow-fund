@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EERCDebug } from "./EERCDebug";
 
 const DonationFlowTest = () => {
   const [campaignAddress, setCampaignAddress] = useState(
@@ -29,6 +30,7 @@ const DonationFlowTest = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <EERCDebug />
       <Card className="glass border-red-500/20">
         <CardHeader>
           <CardTitle className="text-white">

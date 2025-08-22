@@ -13,7 +13,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { useEERC } from "@/hooks/useEERC";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { useCampaignFactory } from "@/hooks/useCampaignFactory";
 import { useToast } from "@/hooks/use-toast";
 import WalletConnectionModal from "./WalletConnectionModal";
@@ -23,7 +23,7 @@ import ImageUpload from "./ImageUpload";
 const CampaignForm = () => {
   const navigate = useNavigate();
   const { isConnected, address } = useAccount();
-  const { isRegistered, isLoading: isEERCLoading } = useEERC("standalone");
+  const { isRegistered, keyLoaded } = useEERCWithKey("standalone");
   const {
     createCampaign,
     isLoading: isCampaignLoading,
@@ -535,7 +535,7 @@ const CampaignForm = () => {
 
               <button
                 onClick={handleDeploy}
-                disabled={isDeploying || isCampaignLoading || isEERCLoading}
+                disabled={isDeploying || isCampaignLoading || !keyLoaded}
                 className="btn-primary px-8 py-4 font-semibold text-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
               >
                 {isDeploying || isCampaignLoading ? (

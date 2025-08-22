@@ -9,7 +9,7 @@ import {
   Loader,
   AlertCircle,
 } from "lucide-react";
-import { useEERCBalance } from "@/hooks/useEERCBalance";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { useCampaign } from "@/hooks/useCampaign";
 import { EXPLORER_BASE_URL_TX } from "@/config/contracts";
 
@@ -31,7 +31,7 @@ const DonationHistory = ({
   className = "",
 }: DonationHistoryProps) => {
   const { address } = useAccount();
-  const { decryptMessage } = useEERCBalance("standalone");
+  const { decryptMessage } = useEERCWithKey("standalone");
   const { getDonationHashes } = useCampaign(campaignAddress);
 
   const [donations, setDonations] = useState<DecryptedDonation[]>([]);

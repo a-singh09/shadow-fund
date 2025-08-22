@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCampaignList, type CampaignData } from "@/hooks/useCampaignList";
-import { useEERCBalance } from "@/hooks/useEERCBalance";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { formatEther } from "viem";
 
 interface CampaignManagementProps {
@@ -25,7 +25,7 @@ interface CampaignManagementProps {
 const CampaignManagement = ({ className = "" }: CampaignManagementProps) => {
   const { address } = useAccount();
   const { campaigns, loading, error, refetch } = useCampaignList();
-  const { decryptedBalance } = useEERCBalance("standalone");
+  const { decryptedBalance } = useEERCWithKey("standalone");
 
   const [creatorCampaigns, setCreatorCampaigns] = useState<CampaignData[]>([]);
 

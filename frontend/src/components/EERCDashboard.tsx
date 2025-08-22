@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { Shield, Wallet, Send, Eye } from "lucide-react";
-import { useEERC } from "@/hooks/useEERC";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import EeRC20RegistrationFlow from "./EeRC20RegistrationFlow";
 import EncryptedBalance from "./EncryptedBalance";
 import PrivateTransfer from "./PrivateTransfer";
@@ -26,7 +26,8 @@ const EERCDashboard = ({
   className = "",
 }: EERCDashboardProps) => {
   const { isConnected } = useAccount();
-  const { isRegistered, isLoading } = useEERC(mode);
+  const { isRegistered, keyLoaded } = useEERCWithKey(mode);
+  const isLoading = !keyLoaded;
 
   const [showRegistrationFlow, setShowRegistrationFlow] = useState(false);
   const [activeTab, setActiveTab] = useState<"balance" | "transfer">("balance");

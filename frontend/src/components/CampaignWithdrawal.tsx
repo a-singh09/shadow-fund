@@ -11,7 +11,7 @@ import {
   Users,
   Clock,
 } from "lucide-react";
-import { useEERCBalance } from "@/hooks/useEERCBalance";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { useCampaign } from "@/hooks/useCampaign";
 import { useCampaignList } from "@/hooks/useCampaignList";
 import { parseEther, formatEther } from "viem";
@@ -27,7 +27,7 @@ const CampaignWithdrawal = ({ className = "" }: CampaignWithdrawalProps) => {
   const campaignParam = searchParams.get("campaign");
 
   const { decryptedBalance, withdraw, privateTransfer } =
-    useEERCBalance("standalone");
+    useEERCWithKey("standalone");
   const { registerWithdrawal, getCampaignInfo } = useCampaign(
     campaignParam || undefined,
   );

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, RefreshCw, Shield, AlertCircle } from "lucide-react";
-import { useEERC } from "@/hooks/useEERC";
-import { useEERCBalance } from "@/hooks/useEERCBalance";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { formatEther } from "viem";
 
 interface EncryptedBalanceProps {
@@ -15,14 +14,11 @@ const EncryptedBalance = ({
   showTitle = true,
   className = "",
 }: EncryptedBalanceProps) => {
-  const { isRegistered } = useEERC(mode);
-  const {
-    decryptedBalance,
-    encryptedBalance,
-    refetchBalance,
-    isLoading,
-    error,
-  } = useEERCBalance(mode);
+  const { isRegistered, decryptedBalance, encryptedBalance, refetchBalance } =
+    useEERCWithKey(mode);
+
+  const isLoading = false; // useEERCWithKey doesn't have separate loading state
+  const error = null; // useEERCWithKey doesn't have separate error state
 
   const [showDecrypted, setShowDecrypted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);

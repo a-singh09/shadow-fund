@@ -6,21 +6,20 @@ import {
   Users,
   Gift,
   Loader2,
-  CheckCircle,
   AlertCircle,
   MessageSquare,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useEERC } from "@/hooks/useEERC";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { useCampaign } from "@/hooks/useCampaign";
 import { useAccount } from "wagmi";
-import { parseUnits } from "viem";
-import { EXPLORER_BASE_URL_TX } from "@/config/contracts";
+import { parseUnits, isAddress } from "viem";
+
 import DonationConfirmation from "./DonationConfirmation";
+import { EERCRegistration } from "./EERCRegistration";
 
 interface Campaign {
   id: string;
@@ -50,19 +49,14 @@ const DonationSidebar = ({
     "form" | "processing" | "success" | "error"
   >("form");
   const [transactionHash, setTransactionHash] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const { toast } = useToast();
-  const { address, isConnected } = useAccount();
-  const {
-    isRegistered,
-    useEncryptedBalance,
-    isLoading: isEERCLoading,
-    isInitialized,
-  } = useEERC("standalone");
-  const { registerDonation, isLoading: isCampaignLoading } =
-    useCampaign(campaignAddress);
+  const { isConnected } = useAccount();
+  const eercSDK = useEERCWithKey("standalone");
+  const { isRegistered, useEncryptedBalance, isInitialized, keyLoaded } =
+    eercSDK;
+  const { registerDonation } = useCampaign(campaignAddress);
 
   // Get encrypted balance hook - only call if useEncryptedBalance is available
   const encryptedBalanceHook = useEncryptedBalance
@@ -159,14 +153,69 @@ const DonationSidebar = ({
 
     setIsDonating(true);
     setDonationStep("processing");
-    setErrorMessage("");
 
     try {
-      // Convert amount to proper units (assuming 2 decimals for eERC20)
-      const amount = parseUnits(donationAmount, Number(decimals || 2n));
+      // Convert amount to proper units (eERC20 standalone uses 2 decimals)
+      const decimalPlaces = decimals ? Number(decimals) : 2;
+      console.log(
+        "Donation amount:",
+        donationAmount,
+        "Decimals:",
+        decimalPlaces,
+      );
+
+      // Validate the donation amount
+      if (!donationAmount || isNaN(parseFloat(donationAmount))) {
+        throw new Error("Invalid donation amount format");
+      }
+
+      const amount = parseUnits(donationAmount, decimalPlaces);
+      console.log("Converted amount:", amount.toString());
+
+      // Validate amount is positive
+      if (amount <= 0n) {
+        throw new Error("Donation amount must be greater than zero");
+      }
+
+      // Check if user has sufficient balance
+      if (decryptedBalance === null) {
+        throw new Error(
+          "Unable to determine your eERC balance. Please ensure you're registered and have tokens.",
+        );
+      }
+
+      if (decryptedBalance === 0n) {
+        throw new Error(
+          "You have no eERC tokens to donate. Please get some TEST tokens first.",
+        );
+      }
+
+      if (decryptedBalance < amount) {
+        const currentBalance =
+          Number(decryptedBalance) / Math.pow(10, decimalPlaces);
+        throw new Error(
+          `Insufficient balance. You have ${currentBalance} TEST, but trying to send ${donationAmount} TEST`,
+        );
+      }
+
+      // Validate creator address
+      if (!campaign.creator) {
+        throw new Error("Campaign creator address is missing");
+      }
+
+      // Validate address format
+      if (!isAddress(campaign.creator)) {
+        throw new Error("Invalid campaign creator address format");
+      }
+
+      console.log("Campaign creator:", campaign.creator);
+
+      // Check if recipient is registered (optional check - the SDK will handle this)
+      // Note: We can't easily check this without additional SDK methods
 
       // Format the donation message according to spec: "DONATION:campaignAddr:message"
       const formattedMessage = formatDonationMessage(donationMessage);
+      console.log("Formatted message:", formattedMessage);
 
       // Step 1: Execute eERC20 private transfer
       toast({
@@ -178,11 +227,19 @@ const DonationSidebar = ({
         throw new Error("Private transfer function not available");
       }
 
+      console.log("Calling privateTransfer with:", {
+        recipient: campaign.creator,
+        amount: amount.toString(),
+        message: formattedMessage,
+      });
+
       const transferResult = await privateTransfer(
         campaign.creator,
         amount,
         formattedMessage,
       );
+
+      console.log("Transfer result:", transferResult);
 
       setTransactionHash(transferResult.transactionHash);
 
@@ -229,7 +286,6 @@ const DonationSidebar = ({
       console.error("Donation failed:", error);
       const errorMsg =
         error instanceof Error ? error.message : "Donation failed";
-      setErrorMessage(errorMsg);
       setDonationStep("error");
 
       toast({
@@ -245,7 +301,6 @@ const DonationSidebar = ({
   const resetDonationFlow = () => {
     setDonationStep("form");
     setTransactionHash("");
-    setErrorMessage("");
     setShowConfirmation(false);
   };
 
@@ -333,7 +388,7 @@ const DonationSidebar = ({
           </div>
         )}
 
-        {isConnected && !isInitialized && (
+        {isConnected && (!keyLoaded || !isInitialized) && (
           <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
             <div className="flex items-center space-x-2 text-yellow-400 text-sm">
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -342,12 +397,9 @@ const DonationSidebar = ({
           </div>
         )}
 
-        {isConnected && isInitialized && !isRegistered && (
-          <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-            <div className="flex items-center space-x-2 text-blue-400 text-sm">
-              <Shield className="w-4 h-4" />
-              <span>eERC20 registration required for private donations</span>
-            </div>
+        {isConnected && keyLoaded && isInitialized && !isRegistered && (
+          <div className="mb-6">
+            <EERCRegistration mode="standalone" />
           </div>
         )}
 
@@ -460,7 +512,6 @@ const DonationSidebar = ({
               !isRegistered ||
               !donationAmount ||
               parseFloat(donationAmount) <= 0 ||
-              isEERCLoading ||
               !privateTransfer
             }
             className="w-full btn-primary py-4 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"

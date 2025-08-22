@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useConnect, useAccount, useDisconnect } from "wagmi";
 import { X, Shield, Wallet, CheckCircle, Loader2 } from "lucide-react";
-import { useEERC } from "@/hooks/useEERC";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 
 interface WalletConnectionModalProps {
   isOpen: boolean;
@@ -15,11 +15,8 @@ const WalletConnectionModal = ({
   const { connect, connectors, isPending } = useConnect();
   const { isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const {
-    isRegistered,
-    register,
-    isLoading: isEERCLoading,
-  } = useEERC("standalone");
+  const { isRegistered, registerWithKey, keyLoaded } =
+    useEERCWithKey("standalone");
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedConnector, setSelectedConnector] = useState<string | null>(
@@ -41,7 +38,7 @@ const WalletConnectionModal = ({
   const handleRegister = async () => {
     setIsRegistering(true);
     try {
-      await register();
+      await registerWithKey();
       onClose();
     } catch (error) {
       console.error("Failed to register with eERC20:", error);
@@ -127,10 +124,10 @@ const WalletConnectionModal = ({
                 </p>
                 <button
                   onClick={handleRegister}
-                  disabled={isRegistering || isEERCLoading}
+                  disabled={isRegistering || !keyLoaded}
                   className="w-full p-3 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
                 >
-                  {isRegistering || isEERCLoading ? (
+                  {isRegistering || !keyLoaded ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
                       Registering...

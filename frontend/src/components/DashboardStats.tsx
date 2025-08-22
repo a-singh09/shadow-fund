@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { Wallet, Rocket, Users, TrendingUp, Eye, EyeOff } from "lucide-react";
-import { useEERCBalance } from "@/hooks/useEERCBalance";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { useCampaignList } from "@/hooks/useCampaignList";
 import { formatEther } from "viem";
 
 const DashboardStats = () => {
   const { address } = useAccount();
-  const { decryptedBalance } = useEERCBalance("standalone");
+  const { decryptedBalance } = useEERCWithKey("standalone");
   const { campaigns } = useCampaignList();
   const [showBalance, setShowBalance] = useState(false);
   const [stats, setStats] = useState([

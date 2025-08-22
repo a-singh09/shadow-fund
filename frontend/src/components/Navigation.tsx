@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WalletConnectionModal from "./WalletConnectionModal";
-import { useEERC } from "@/hooks/useEERC";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,7 +24,7 @@ const Navigation = () => {
 
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { isRegistered } = useEERC("standalone");
+  const { isRegistered } = useEERCWithKey("standalone");
   const location = useLocation();
 
   const menuItems = [

@@ -27,6 +27,10 @@ export const CIRCUIT_CONFIG = {
     wasm: "/circuits/WithdrawCircuit.wasm",
     zkey: "/circuits/WithdrawCircuit.groth16.zkey",
   },
+  burn: {
+    wasm: "/circuits/TransferCircuit.wasm", // Burn uses transfer circuit
+    zkey: "/circuits/TransferCircuit.groth16.zkey",
+  },
 } as const;
 
 // Network configuration

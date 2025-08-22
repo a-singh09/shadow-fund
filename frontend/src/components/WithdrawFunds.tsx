@@ -7,8 +7,7 @@ import {
   CheckCircle,
   Shield,
 } from "lucide-react";
-import { useEERC } from "@/hooks/useEERC";
-import { useEERCBalance } from "@/hooks/useEERCBalance";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { parseEther, formatEther } from "viem";
 import { EXPLORER_BASE_URL_TX } from "@/config/contracts";
 
@@ -26,8 +25,10 @@ const WithdrawFunds = ({
   className = "",
 }: WithdrawFundsProps) => {
   const { address } = useAccount();
-  const { isRegistered } = useEERC(mode);
-  const { decryptedBalance, withdraw, isLoading, error } = useEERCBalance(mode);
+  const { isRegistered, decryptedBalance, withdraw } = useEERCWithKey(mode);
+
+  const isLoading = false; // useEERCWithKey doesn't have separate loading state
+  const error = null; // useEERCWithKey doesn't have separate error state
 
   const [amount, setAmount] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
