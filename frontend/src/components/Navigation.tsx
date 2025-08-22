@@ -24,7 +24,7 @@ const Navigation = () => {
 
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { isRegistered } = useEERCWithKey("standalone");
+  const { isRegistered } = useEERCWithKey("converter");
   const location = useLocation();
 
   const menuItems = [

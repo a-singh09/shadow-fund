@@ -23,7 +23,7 @@ import ImageUpload from "./ImageUpload";
 const CampaignForm = () => {
   const navigate = useNavigate();
   const { isConnected, address } = useAccount();
-  const { isRegistered, keyLoaded } = useEERCWithKey("standalone");
+  const { isRegistered, keyLoaded } = useEERCWithKey("converter");
   const {
     createCampaign,
     isLoading: isCampaignLoading,

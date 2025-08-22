@@ -27,7 +27,7 @@ const CampaignWithdrawal = ({ className = "" }: CampaignWithdrawalProps) => {
   const campaignParam = searchParams.get("campaign");
 
   const { decryptedBalance, withdraw, privateTransfer } =
-    useEERCWithKey("standalone");
+    useEERCWithKey("converter");
   const { registerWithdrawal, getCampaignInfo } = useCampaign(
     campaignParam || undefined,
   );

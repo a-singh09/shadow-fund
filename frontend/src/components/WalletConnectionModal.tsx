@@ -16,7 +16,7 @@ const WalletConnectionModal = ({
   const { isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { isRegistered, registerWithKey, keyLoaded } =
-    useEERCWithKey("standalone");
+    useEERCWithKey("converter");
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedConnector, setSelectedConnector] = useState<string | null>(

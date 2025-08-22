@@ -10,7 +10,7 @@ interface EncryptedBalanceProps {
 }
 
 const EncryptedBalance = ({
-  mode = "standalone",
+  mode = "converter",
   showTitle = true,
   className = "",
 }: EncryptedBalanceProps) => {

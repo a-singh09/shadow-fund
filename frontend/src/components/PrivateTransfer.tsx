@@ -14,7 +14,7 @@ interface PrivateTransferProps {
 }
 
 const PrivateTransfer = ({
-  mode = "standalone",
+  mode = "converter",
   recipientAddress = "",
   recipientLabel = "Recipient",
   messagePrefix = "",

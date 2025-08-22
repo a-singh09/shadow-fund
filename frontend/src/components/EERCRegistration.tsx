@@ -18,7 +18,7 @@ interface EERCRegistrationProps {
 }
 
 export function EERCRegistration({
-  mode = "standalone",
+  mode = "converter",
   onRegistrationComplete,
 }: EERCRegistrationProps) {
   const [isRegistering, setIsRegistering] = useState(false);

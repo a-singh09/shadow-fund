@@ -23,7 +23,7 @@ const EeRC20RegistrationFlow = ({
 }: EeRC20RegistrationFlowProps) => {
   const { isConnected } = useAccount();
   const { isRegistered, registerWithKey, keyLoaded } =
-    useEERCWithKey("standalone");
+    useEERCWithKey("converter");
 
   const isLoading = !keyLoaded;
   const error = null;

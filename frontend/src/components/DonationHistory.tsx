@@ -31,7 +31,7 @@ const DonationHistory = ({
   className = "",
 }: DonationHistoryProps) => {
   const { address } = useAccount();
-  const { decryptMessage } = useEERCWithKey("standalone");
+  const { decryptMessage } = useEERCWithKey("converter");
   const { getDonationHashes } = useCampaign(campaignAddress);
 
   const [donations, setDonations] = useState<DecryptedDonation[]>([]);

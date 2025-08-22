@@ -13,13 +13,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useEERCWithKey } from "@/hooks/useEERCWithKey";
+
 import { useCampaign } from "@/hooks/useCampaign";
 import { useAccount } from "wagmi";
 import { parseUnits, isAddress } from "viem";
+import { CONTRACTS } from "@/config/contracts";
 
 import DonationConfirmation from "./DonationConfirmation";
-import { EERCRegistration } from "./EERCRegistration";
+import FinalTokenConverter from "./FinalTokenConverter";
+
+import { formatMessageForEERC, handleEERCError } from "@/utils/eercUtils";
+import { useEERC } from "@avalabs/eerc-sdk";
+import { usePublicClient, useWalletClient } from "wagmi";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { toast } from "sonner";
+import { error } from "console";
+import { error } from "console";
 
 interface Campaign {
   id: string;
@@ -37,10 +56,12 @@ interface DonationSidebarProps {
   campaignAddress?: string; // Contract address of the campaign
 }
 
-const DonationSidebar = ({
-  campaign,
-  campaignAddress,
-}: DonationSidebarProps) => {
+// Component that only renders when fully ready and calls useEncryptedBalance
+const ReadyDonationSidebar: React.FC<{
+  campaign: Campaign;
+  campaignAddress?: string;
+  eercSDK: any;
+}> = ({ campaign, campaignAddress, eercSDK }) => {
   const [donationAmount, setDonationAmount] = useState("");
   const [donationMessage, setDonationMessage] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -52,40 +73,58 @@ const DonationSidebar = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const { toast } = useToast();
-  const { isConnected } = useAccount();
-  const eercSDK = useEERCWithKey("standalone");
-  const { isRegistered, useEncryptedBalance, isInitialized, keyLoaded } =
-    eercSDK;
+  const { isConnected, address } = useAccount();
   const { registerDonation } = useCampaign(campaignAddress);
 
-  // Get encrypted balance hook - only call if useEncryptedBalance is available
-  const encryptedBalanceHook = useEncryptedBalance
-    ? useEncryptedBalance()
-    : null;
-  const { decryptedBalance, privateTransfer, decimals } =
-    encryptedBalanceHook || {
-      decryptedBalance: null,
-      privateTransfer: null,
-      decimals: null,
-    };
+  const { useEncryptedBalance, isInitialized, isRegistered } = eercSDK;
+
+  // Double-check that everything is ready before calling useEncryptedBalance
+  if (!isInitialized || !isRegistered || !useEncryptedBalance) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Finalizing eERC20 initialization...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Now it should be safe to call useEncryptedBalance
+  let encryptedBalanceHook = null;
+  let decryptedBalance = null;
+  let privateTransfer = null;
+  let decimals = null;
+
+  try {
+    encryptedBalanceHook = useEncryptedBalance(CONTRACTS.CONVERTER.ERC20);
+    if (encryptedBalanceHook) {
+      decryptedBalance = encryptedBalanceHook.decryptedBalance;
+      privateTransfer = encryptedBalanceHook.privateTransfer;
+      decimals = encryptedBalanceHook.decimals;
+    }
+  } catch (error) {
+    console.error("Error calling useEncryptedBalance:", error);
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <div className="flex items-center space-x-2 text-red-400 text-sm">
+            <AlertCircle className="w-4 h-4" />
+            <span>
+              Error initializing eERC20 balance. Please refresh the page.
+            </span>
+          </div>
+          <div className="mt-2 text-xs text-gray-500">
+            Error: {error instanceof Error ? error.message : "Unknown error"}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const predefinedAmounts = [10, 25, 50, 100];
-
-  const handleDonate = () => {
-    if (!donationAmount || parseFloat(donationAmount) <= 0) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid donation amount.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Donation Initiated",
-      description: `Your anonymous donation of $${donationAmount} is being processed with full privacy protection.`,
-    });
-  };
 
   // Format donation message according to spec: "DONATION:campaignAddr:message"
   const formatDonationMessage = (userMessage: string): string => {
@@ -178,6 +217,16 @@ const DonationSidebar = ({
       }
 
       // Check if user has sufficient balance
+      console.log("Debug - Balance check:", {
+        decryptedBalance,
+        decryptedBalanceType: typeof decryptedBalance,
+        isNull: decryptedBalance === null,
+        isZero: decryptedBalance === 0n,
+        decimals,
+        isRegistered,
+        isInitialized,
+      });
+
       if (decryptedBalance === null) {
         throw new Error(
           "Unable to determine your eERC balance. Please ensure you're registered and have tokens.",
@@ -214,7 +263,9 @@ const DonationSidebar = ({
       // Note: We can't easily check this without additional SDK methods
 
       // Format the donation message according to spec: "DONATION:campaignAddr:message"
-      const formattedMessage = formatDonationMessage(donationMessage);
+      const donationMsg = formatDonationMessage(donationMessage);
+      // Ensure the message is properly formatted for eERC SDK
+      const formattedMessage = formatMessageForEERC(donationMsg);
       console.log("Formatted message:", formattedMessage);
 
       // Step 1: Execute eERC20 private transfer
@@ -284,8 +335,9 @@ const DonationSidebar = ({
       setDonationMessage("");
     } catch (error) {
       console.error("Donation failed:", error);
-      const errorMsg =
-        error instanceof Error ? error.message : "Donation failed";
+
+      // Use the eERC error handler for better error messages
+      const errorMsg = handleEERCError(error);
       setDonationStep("error");
 
       toast({
@@ -378,30 +430,14 @@ const DonationSidebar = ({
           </div>
         </div>
 
-        {/* Connection Status */}
-        {!isConnected && (
-          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-            <div className="flex items-center space-x-2 text-yellow-400 text-sm">
-              <AlertCircle className="w-4 h-4" />
-              <span>Connect wallet to make donations</span>
+        {/* Token Converter - Show if registered but has low/no eERC20 balance */}
+        {isConnected &&
+          isRegistered &&
+          (decryptedBalance === null || decryptedBalance === 0n) && (
+            <div className="mb-6">
+              <FinalTokenConverter />
             </div>
-          </div>
-        )}
-
-        {isConnected && (!keyLoaded || !isInitialized) && (
-          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-            <div className="flex items-center space-x-2 text-yellow-400 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Initializing eERC20 system...</span>
-            </div>
-          </div>
-        )}
-
-        {isConnected && keyLoaded && isInitialized && !isRegistered && (
-          <div className="mb-6">
-            <EERCRegistration mode="standalone" />
-          </div>
-        )}
+          )}
 
         {/* Balance Display */}
         {isConnected &&
@@ -555,6 +591,292 @@ const DonationSidebar = ({
         </div>
       </div>
     </div>
+  );
+};
+
+// Component that handles the different states before the donation sidebar is ready
+const EERCDonationSidebar: React.FC<{
+  campaign: Campaign;
+  campaignAddress?: string;
+  eercSDK: any;
+}> = ({ campaign, campaignAddress, eercSDK }) => {
+  const { toast } = useToast();
+  const { address } = useAccount();
+
+  const { isInitialized, isRegistered, generateDecryptionKey, register } =
+    eercSDK;
+
+  console.log("EERCDonationSidebar render:", {
+    isInitialized,
+    isRegistered,
+    address,
+  });
+
+  // Check if decryption key is stored in localStorage
+  const getStoredKey = () => {
+    if (!address) return undefined;
+    return localStorage.getItem(`eerc-key-converter-${address}`) || undefined;
+  };
+
+  const isDecryptionKeySet = !!getStoredKey();
+
+  const handleGenerateKey = async () => {
+    if (!generateDecryptionKey) return;
+
+    try {
+      console.log("Generating decryption key...");
+      const key = await generateDecryptionKey();
+      console.log("Key generated successfully");
+
+      // Store the key in localStorage
+      if (address && key) {
+        localStorage.setItem(`eerc-key-converter-${address}`, key);
+        console.log("Key stored in localStorage");
+      }
+
+      toast({
+        title: "Key Generated",
+        description:
+          "Decryption key generated successfully. You can now register with eERC20.",
+      });
+    } catch (error) {
+      console.error("Key generation failed:", error);
+      toast({
+        title: "Key Generation Failed",
+        description:
+          error instanceof Error ? error.message : "Failed to generate key",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!register) return;
+
+    try {
+      console.log("Starting registration...");
+      await register();
+      console.log("Registration successful");
+
+      toast({
+        title: "Registration Successful",
+        description:
+          "You are now registered with eERC20 and can make private donations.",
+      });
+    } catch (error) {
+      console.error("Registration failed:", error);
+      toast({
+        title: "Registration Failed",
+        description:
+          error instanceof Error ? error.message : "Registration failed",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (!isInitialized) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Initializing eERC20 system...</span>
+          </div>
+          <div className="mt-2 text-xs text-gray-500">
+            Loading circuit files and initializing SDK...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isDecryptionKeySet) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <h3 className="text-xl font-bold text-white mb-4">
+            Generate Decryption Key
+          </h3>
+          <p className="text-gray-300 text-sm mb-4">
+            You need to generate a decryption key to make private donations.
+          </p>
+          <Button
+            onClick={handleGenerateKey}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Generate Key
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isRegistered) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <h3 className="text-xl font-bold text-white mb-4">
+            Register with eERC20
+          </h3>
+          <p className="text-gray-300 text-sm mb-4">
+            You need to register with the eERC20 system to make private
+            donations.
+          </p>
+          <Button
+            onClick={handleRegister}
+            className="w-full bg-green-600 hover:bg-green-700"
+          >
+            Register
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render ReadyDonationSidebar if ALL conditions are met
+  if (isInitialized && isRegistered && isDecryptionKeySet) {
+    return (
+      <ReadyDonationSidebar
+        campaign={campaign}
+        campaignAddress={campaignAddress}
+        eercSDK={eercSDK}
+      />
+    );
+  }
+
+  // If we somehow get here, show an error state
+  return (
+    <div className="sticky top-24">
+      <div className="glass rounded-2xl p-8 border border-red-500/20">
+        <div className="flex items-center space-x-2 text-red-400 text-sm">
+          <AlertCircle className="w-4 h-4" />
+          <span>Unexpected state - please refresh the page</span>
+        </div>
+        <div className="mt-2 text-xs text-gray-500">
+          Debug: Init={isInitialized ? "✓" : "✗"}, Registered=
+          {isRegistered ? "✓" : "✗"}, Key={isDecryptionKeySet ? "✓" : "✗"}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Wrapper component that handles eERC SDK initialization
+const DonationSidebarContent: React.FC<{
+  campaign: Campaign;
+  campaignAddress?: string;
+}> = ({ campaign, campaignAddress }) => {
+  const { address } = useAccount();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
+
+  // Circuit URLs
+  const circuitURLs = {
+    register: {
+      wasm: "/circuits/RegistrationCircuit.wasm",
+      zkey: "/circuits/RegistrationCircuit.groth16.zkey",
+    },
+    transfer: {
+      wasm: "/circuits/TransferCircuit.wasm",
+      zkey: "/circuits/TransferCircuit.groth16.zkey",
+    },
+    mint: {
+      wasm: "/circuits/MintCircuit.wasm",
+      zkey: "/circuits/MintCircuit.groth16.zkey",
+    },
+    withdraw: {
+      wasm: "/circuits/WithdrawCircuit.wasm",
+      zkey: "/circuits/WithdrawCircuit.groth16.zkey",
+    },
+    burn: {
+      wasm: "/circuits/TransferCircuit.wasm",
+      zkey: "/circuits/TransferCircuit.groth16.zkey",
+    },
+  };
+
+  // Get stored decryption key
+  const getStoredKey = () => {
+    if (!address) return undefined;
+    return localStorage.getItem(`eerc-key-converter-${address}`) || undefined;
+  };
+
+  // Initialize eERC SDK with stored key
+  let eercSDK;
+  try {
+    eercSDK = useEERC(
+      publicClient,
+      walletClient,
+      CONTRACTS.CONVERTER.ENCRYPTED_ERC,
+      circuitURLs,
+      getStoredKey(),
+    );
+  } catch (error) {
+    console.error("Error initializing eERC SDK:", error);
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <div className="flex items-center space-x-2 text-red-400 text-sm">
+            <AlertCircle className="w-4 h-4" />
+            <span>Error initializing eERC SDK. Please refresh the page.</span>
+          </div>
+          <div className="mt-2 text-xs text-gray-500">
+            Error: {error instanceof Error ? error.message : "Unknown error"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Safety check for eercSDK
+  if (!eercSDK) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Loading eERC SDK...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <EERCDonationSidebar
+      campaign={campaign}
+      campaignAddress={campaignAddress}
+      eercSDK={eercSDK}
+    />
+  );
+};
+
+// Main wrapper component
+const DonationSidebar = ({
+  campaign,
+  campaignAddress,
+}: DonationSidebarProps) => {
+  const { isConnected } = useAccount();
+
+  if (!isConnected) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+            <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+              <AlertCircle className="w-4 h-4" />
+              <span>Connect wallet to make donations</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <DonationSidebarContent
+      campaign={campaign}
+      campaignAddress={campaignAddress}
+    />
   );
 };
 

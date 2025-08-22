@@ -20,7 +20,7 @@ interface WithdrawFundsProps {
 
 const WithdrawFunds = ({
   campaignAddress,
-  mode = "standalone",
+  mode = "converter",
   onWithdrawComplete,
   className = "",
 }: WithdrawFundsProps) => {

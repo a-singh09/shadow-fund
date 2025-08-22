@@ -1,111 +1,84 @@
-import { useEERCWithKey } from "@/hooks/useEERCWithKey";
+import React from "react";
 import { useAccount } from "wagmi";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
+import { CONTRACTS } from "@/config/contracts";
 
-export function EERCDebug() {
+interface EERCDebugProps {
+  mode: "standalone" | "converter";
+}
+
+export const EERCDebug: React.FC<EERCDebugProps> = ({ mode }) => {
   const { address, isConnected } = useAccount();
-  const eercSDK = useEERCWithKey("standalone");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const eercSDK = useEERCWithKey(mode);
 
   const {
     isInitialized,
     isRegistered,
-    isDecryptionKeySet,
-    publicKey,
-    name,
-    symbol,
-    decimals,
-    generateAndStoreKey,
-    hasStoredKey,
+    keyLoaded,
     decryptionKey,
+    decryptedBalance,
+    encryptedBalance,
+    decimals,
   } = eercSDK;
 
-  const handleGenerateKey = async () => {
-    setIsGenerating(true);
-    try {
-      await generateAndStoreKey();
-    } catch (error) {
-      console.error("Failed to generate key:", error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const storedKey = hasStoredKey();
+  const contractAddress =
+    mode === "standalone"
+      ? CONTRACTS.STANDALONE.ENCRYPTED_ERC
+      : CONTRACTS.CONVERTER.ENCRYPTED_ERC;
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>eERC Debug Information</CardTitle>
-        <CardDescription>
-          Debug information for eERC integration
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <strong>Wallet Connected:</strong> {isConnected ? "Yes" : "No"}
-          </div>
-          <div>
-            <strong>Address:</strong> {address || "N/A"}
-          </div>
-          <div>
-            <strong>eERC Initialized:</strong> {isInitialized ? "Yes" : "No"}
-          </div>
-          <div>
-            <strong>User Registered:</strong> {isRegistered ? "Yes" : "No"}
-          </div>
-          <div>
-            <strong>Decryption Key Set:</strong>{" "}
-            {isDecryptionKeySet ? "Yes" : "No"}
-          </div>
-          <div>
-            <strong>Stored Key:</strong> {storedKey ? "Yes" : "No"}
-          </div>
-          <div>
-            <strong>Token Name:</strong> {name || "N/A"}
-          </div>
-          <div>
-            <strong>Token Symbol:</strong> {symbol || "N/A"}
-          </div>
+    <div className="p-4 bg-gray-800 rounded-lg border border-gray-600 text-sm">
+      <h3 className="text-lg font-bold text-white mb-4">
+        eERC Debug Info ({mode})
+      </h3>
+
+      <div className="space-y-2 text-gray-300">
+        <div>
+          <strong>Wallet Connected:</strong> {isConnected ? "Yes" : "No"}
+        </div>
+        <div>
+          <strong>Address:</strong> {address || "Not connected"}
+        </div>
+        <div>
+          <strong>Contract Address:</strong> {contractAddress}
+        </div>
+        <div>
+          <strong>Key Loaded:</strong> {keyLoaded ? "Yes" : "No"}
+        </div>
+        <div>
+          <strong>Has Decryption Key:</strong> {decryptionKey ? "Yes" : "No"}
+        </div>
+        <div>
+          <strong>SDK Initialized:</strong> {isInitialized ? "Yes" : "No"}
+        </div>
+        <div>
+          <strong>Is Registered:</strong> {isRegistered ? "Yes" : "No"}
+        </div>
+        <div>
+          <strong>Decimals:</strong> {decimals?.toString() || "null"}
+        </div>
+        <div>
+          <strong>Encrypted Balance:</strong>{" "}
+          {encryptedBalance
+            ? Array.isArray(encryptedBalance)
+              ? `[${encryptedBalance.length} items]`
+              : encryptedBalance.toString()
+            : "null"}
+        </div>
+        <div>
+          <strong>Decrypted Balance:</strong>{" "}
+          {decryptedBalance !== null
+            ? `${decryptedBalance.toString()} (${Number(decryptedBalance) / Math.pow(10, Number(decimals || 2))} TEST)`
+            : "null"}
         </div>
 
-        {publicKey && (
+        {address && (
           <div>
-            <strong>Public Key:</strong>
-            <pre className="text-xs bg-gray-100 p-2 rounded mt-1">
-              {JSON.stringify(publicKey, null, 2)}
-            </pre>
+            <strong>Stored Key:</strong>{" "}
+            {localStorage.getItem(`eerc-key-${mode}-${address}`) ? "Yes" : "No"}
           </div>
         )}
-
-        {decryptionKey && (
-          <div>
-            <strong>Stored Decryption Key:</strong>
-            <pre className="text-xs bg-gray-100 p-2 rounded mt-1 break-all">
-              {decryptionKey.substring(0, 50)}...
-            </pre>
-          </div>
-        )}
-
-        {isConnected && !storedKey && (
-          <Button
-            onClick={handleGenerateKey}
-            disabled={isGenerating}
-            className="w-full"
-          >
-            {isGenerating ? "Generating..." : "Generate Decryption Key"}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
-}
+};

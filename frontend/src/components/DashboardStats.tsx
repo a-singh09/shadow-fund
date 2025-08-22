@@ -7,7 +7,7 @@ import { formatEther } from "viem";
 
 const DashboardStats = () => {
   const { address } = useAccount();
-  const { decryptedBalance } = useEERCWithKey("standalone");
+  const { decryptedBalance } = useEERCWithKey("converter");
   const { campaigns } = useCampaignList();
   const [showBalance, setShowBalance] = useState(false);
   const [stats, setStats] = useState([

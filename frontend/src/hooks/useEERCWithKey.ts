@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { useEERC as useEERCSDK } from "@avalabs/eerc-sdk";
-import { CONTRACTS, CIRCUIT_CONFIG } from "@/config/contracts";
+import {
+  CONTRACTS,
+  CIRCUIT_CONFIG,
+  getEncryptedERCAddress,
+} from "@/config/contracts";
 
 export function useEERCWithKey(
   mode: "standalone" | "converter" = "standalone",
@@ -28,10 +32,7 @@ export function useEERCWithKey(
   }, [address, isConnected, mode]);
 
   // Initialize eERC SDK
-  const contractAddress =
-    mode === "standalone"
-      ? CONTRACTS.EERC_STANDALONE
-      : CONTRACTS.EERC_CONVERTER;
+  const contractAddress = getEncryptedERCAddress(mode);
 
   // Always initialize the SDK (with or without key) so we can generate keys
   const eercSDK = useEERCSDK(
@@ -44,9 +45,16 @@ export function useEERCWithKey(
 
   // Always call useEncryptedBalance - this must be called unconditionally
   // according to the Rules of Hooks
-  const encryptedBalanceHook = eercSDK.useEncryptedBalance
-    ? eercSDK.useEncryptedBalance()
-    : null;
+  let encryptedBalanceHook = null;
+  try {
+    encryptedBalanceHook = eercSDK.useEncryptedBalance
+      ? eercSDK.useEncryptedBalance()
+      : null;
+  } catch (error) {
+    console.warn("Error initializing encrypted balance hook:", error);
+    // Continue with null - this will be handled gracefully by the component
+    encryptedBalanceHook = null;
+  }
 
   // Generate and store decryption key
   const generateAndStoreKey = useCallback(async (): Promise<string> => {
@@ -134,10 +142,23 @@ export function useEERCWithKey(
     keyLoaded,
     decryptionKey,
 
-    // Balance functionality
-    decryptedBalance: encryptedBalanceHook?.decryptedBalance || null,
-    parsedDecryptedBalance:
-      encryptedBalanceHook?.parsedDecryptedBalance || null,
+    // Balance functionality with safe access
+    decryptedBalance: (() => {
+      try {
+        return encryptedBalanceHook?.decryptedBalance || null;
+      } catch (error) {
+        console.warn("Error accessing decrypted balance:", error);
+        return null;
+      }
+    })(),
+    parsedDecryptedBalance: (() => {
+      try {
+        return encryptedBalanceHook?.parsedDecryptedBalance || null;
+      } catch (error) {
+        console.warn("Error accessing parsed decrypted balance:", error);
+        return null;
+      }
+    })(),
     encryptedBalance: encryptedBalanceHook?.encryptedBalance || null,
     auditorPublicKey: encryptedBalanceHook?.auditorPublicKey || null,
     decimals: encryptedBalanceHook?.decimals || null,
@@ -168,11 +189,7 @@ export function useEERCWithKey(
       (async () => {
         throw new Error("Deposit not available");
       }),
-    decryptMessage:
-      encryptedBalanceHook?.decryptMessage ||
-      (async () => {
-        throw new Error("Decrypt message not available");
-      }),
+
     refetchBalance: encryptedBalanceHook?.refetchBalance || (() => {}),
   };
 }

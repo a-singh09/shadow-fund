@@ -25,7 +25,7 @@ interface CampaignManagementProps {
 const CampaignManagement = ({ className = "" }: CampaignManagementProps) => {
   const { address } = useAccount();
   const { campaigns, loading, error, refetch } = useCampaignList();
-  const { decryptedBalance } = useEERCWithKey("standalone");
+  const { decryptedBalance } = useEERCWithKey("converter");
 
   const [creatorCampaigns, setCreatorCampaigns] = useState<CampaignData[]>([]);
 

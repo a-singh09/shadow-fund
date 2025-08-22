@@ -17,7 +17,7 @@ interface EERCDashboardProps {
 }
 
 const EERCDashboard = ({
-  mode = "standalone",
+  mode = "converter",
   showTransfer = true,
   transferRecipient,
   transferLabel,
