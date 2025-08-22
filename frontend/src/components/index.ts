@@ -27,6 +27,8 @@ export { default as CampaignWithdrawal } from "./CampaignWithdrawal";
 
 // Layout Components
 export { default as HeroSection } from "./HeroSection";
+export { default as ImpactConstellation } from "./ImpactConstellation";
+export { default as ImpactConstellationSection } from "./ImpactConstellationSection";
 export { default as FeaturesSection } from "./FeaturesSection";
 export { default as HowItWorksSection } from "./HowItWorksSection";
 export { default as StatsSection } from "./StatsSection";

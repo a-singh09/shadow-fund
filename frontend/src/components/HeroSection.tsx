@@ -1,20 +1,20 @@
-import { Plus, Search, Lock, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import heroImage from '@/assets/hero-bg.jpg';
+import { Plus, Search, Lock, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import heroImage from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden floating-particles">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      
+
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-red-900/20" />
-      
+
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -26,21 +26,25 @@ const HeroSection = () => {
 
           {/* Main Headline */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight">
-            <span className="gradient-text">Fund Dreams,</span>
+            <span className="gradient-text">Private Funding,</span>
             <br />
-            <span className="text-white">Protect Privacy</span>
+            <span className="text-white">Unstoppable Freedom</span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl sm:text-2xl text-gray-300 font-medium max-w-3xl mx-auto leading-relaxed">
-            The world's first truly private crowdfunding platform powered by{' '}
-            <span className="text-red-400 font-semibold">Avalanche's encrypted eERC20 tokens</span>
+            Censorship-resistant funding platform with complete privacy
+            protection powered by{" "}
+            <span className="text-red-400 font-semibold">
+              Avalanche's encrypted eERC20 tokens
+            </span>
           </p>
 
           {/* Description */}
           <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            Support innovative projects while keeping your donations completely private. 
-            Built on Avalanche's lightning-fast network with zero-knowledge encryption.
+            Built on Avalanche's lightning-fast network with zero-knowledge
+            encryption to ensure your financial privacy and protect against
+            censorship.
           </p>
 
           {/* CTA Buttons */}
@@ -48,11 +52,11 @@ const HeroSection = () => {
             <Link to="/create-campaign">
               <Button className="btn-primary px-8 py-4 text-lg font-semibold flex items-center space-x-2 hover-lift hover-glow group">
                 <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                <span>Start Fundraising</span>
+                <span>Create Campaign</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </Link>
-            
+
             <Link to="/campaigns">
               <Button className="btn-secondary px-8 py-4 text-lg font-semibold flex items-center space-x-2 hover-lift group">
                 <Search className="w-5 h-5" />
@@ -67,11 +71,13 @@ const HeroSection = () => {
               { label: "Built on Avalanche", value: "⚡" },
               { label: "Zero-Knowledge Privacy", value: "🔒" },
               { label: "Open Source", value: "🔓" },
-              { label: "Audited Smart Contracts", value: "✅" }
+              { label: "Audited Smart Contracts", value: "✅" },
             ].map((indicator, index) => (
               <div key={index} className="text-center space-y-2">
                 <div className="text-2xl">{indicator.value}</div>
-                <div className="text-xs text-gray-400 font-medium">{indicator.label}</div>
+                <div className="text-xs text-gray-400 font-medium">
+                  {indicator.label}
+                </div>
               </div>
             ))}
           </div>
@@ -79,10 +85,22 @@ const HeroSection = () => {
       </div>
 
       {/* Floating Elements */}
-      <div className="absolute top-20 left-10 w-4 h-4 bg-red-400/30 rounded-full animate-float" style={{ animationDelay: '0s' }} />
-      <div className="absolute top-40 right-20 w-6 h-6 bg-red-500/20 rounded-full animate-float" style={{ animationDelay: '1s' }} />
-      <div className="absolute bottom-40 left-20 w-3 h-3 bg-red-300/40 rounded-full animate-float" style={{ animationDelay: '2s' }} />
-      <div className="absolute bottom-20 right-10 w-5 h-5 bg-red-400/25 rounded-full animate-float" style={{ animationDelay: '1.5s' }} />
+      <div
+        className="absolute top-20 left-10 w-4 h-4 bg-red-400/30 rounded-full animate-float"
+        style={{ animationDelay: "0s" }}
+      />
+      <div
+        className="absolute top-40 right-20 w-6 h-6 bg-red-500/20 rounded-full animate-float"
+        style={{ animationDelay: "1s" }}
+      />
+      <div
+        className="absolute bottom-40 left-20 w-3 h-3 bg-red-300/40 rounded-full animate-float"
+        style={{ animationDelay: "2s" }}
+      />
+      <div
+        className="absolute bottom-20 right-10 w-5 h-5 bg-red-400/25 rounded-full animate-float"
+        style={{ animationDelay: "1.5s" }}
+      />
     </section>
   );
 };
