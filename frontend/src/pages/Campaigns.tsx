@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useCampaignList } from "@/hooks/useCampaignList";
+import { getCampaignImage } from "@/lib/campaignImages";
 
 const Campaigns = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -225,8 +226,8 @@ const Campaigns = () => {
                       title={campaign.title}
                       creator={formatCreator(campaign.creator)}
                       description={campaign.description}
-                      category="Privacy" // Default category for now
-                      image="" // No image by default - will show fallback
+                      category="privacy" // Default category for red theme
+                      image={getCampaignImage(campaign.address) || ""} // Use stored image hash
                       supportersCount={Number(campaign.donationCount)}
                       daysLeft={getDaysLeft(campaign.deadline)}
                       progressPercentage={getProgressPercentage(

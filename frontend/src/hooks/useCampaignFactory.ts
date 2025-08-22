@@ -43,6 +43,7 @@ interface CreateCampaignParams {
   title: string;
   description: string;
   deadline: Date;
+  imageHash?: string;
 }
 
 interface UseCampaignFactoryReturn {
@@ -121,6 +122,13 @@ export function useCampaignFactory(): UseCampaignFactoryReturn {
           // For now, we'll need to decode the logs properly
           // This is a simplified approach - in production, you'd decode the event properly
           campaignAddress = receipt.contractAddress || "";
+        }
+
+        // Store image hash temporarily using transaction hash as key
+        // This will be updated once we have the proper campaign address
+        if (params.imageHash) {
+          const { storeCampaignImage } = await import("@/lib/campaignImages");
+          storeCampaignImage(`temp_${hash}`, params.imageHash);
         }
 
         return {

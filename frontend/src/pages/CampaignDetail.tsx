@@ -5,6 +5,9 @@ import MouseFollower from "@/components/MouseFollower";
 import Footer from "@/components/Footer";
 import DonationSidebar from "@/components/DonationSidebar";
 import { useCampaign } from "@/hooks/useCampaign";
+import { getIPFSUrl } from "@/lib/ipfs";
+import { getCampaignFallbackImage } from "@/lib/placeholders";
+import { getCampaignImage } from "@/lib/campaignImages";
 import {
   Heart,
   Share2,
@@ -23,6 +26,8 @@ const CampaignDetail = () => {
   const [campaign, setCampaign] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   // Use the campaign hook to fetch real data
   const { getCampaignInfo, getDonationHashes, isLoading } = useCampaign(id);
@@ -57,8 +62,8 @@ const CampaignDetail = () => {
             creator: campaignInfo.creator,
             description: campaignInfo.description,
             fullDescription: campaignInfo.description, // Use same description for now
-            category: "Technology", // Default category
-            image: "/api/placeholder/800/400", // Placeholder image
+            category: "privacy", // Default category for red theme
+            image: getCampaignImage(id) || "", // Use stored image hash
             supportersCount: Number(campaignInfo.donationCount),
             daysLeft: daysLeft,
             progressPercentage: 0, // We don't have goal amount to calculate this
@@ -107,8 +112,8 @@ Key features include:
 • Ad-free experience
 
 We believe that meaningful connections shouldn't come at the cost of your privacy. Join us in building a social platform that respects your digital rights and empowers genuine human connection.`,
-    category: "Technology",
-    image: "/api/placeholder/800/400",
+    category: "Privacy",
+    image: "", // No image in mock data
     supportersCount: 67,
     daysLeft: 23,
     progressPercentage: 68,
@@ -191,6 +196,31 @@ We believe that meaningful connections shouldn't come at the cost of your privac
     return null;
   }
 
+  // Get proper image URL (handle IPFS hashes and data URLs)
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return "";
+
+    // If it's a data URL, return as-is
+    if (imageUrl.startsWith("data:")) {
+      return imageUrl;
+    }
+
+    // If it's an IPFS hash, convert to URL
+    if (imageUrl.startsWith("Qm") || imageUrl.startsWith("ipfs://")) {
+      return getIPFSUrl(imageUrl);
+    }
+
+    // Return as-is for regular URLs
+    return imageUrl;
+  };
+
+  const imageUrl = getImageUrl(campaign.image);
+  const fallbackImage = getCampaignFallbackImage(
+    campaign.title,
+    campaign.category,
+  );
+  const shouldShowFallback = !imageUrl || imageError;
+
   return (
     <div className="min-h-screen bg-background relative">
       <MouseFollower />
@@ -254,12 +284,39 @@ We believe that meaningful connections shouldn't come at the cost of your privac
                 </div>
 
                 {/* Campaign Image */}
-                <div className="relative mb-8 rounded-2xl overflow-hidden">
-                  <img
-                    src={campaign.image}
-                    alt={campaign.title}
-                    className="w-full h-96 object-cover"
-                  />
+                <div className="relative mb-8 rounded-2xl overflow-hidden bg-gray-800">
+                  {shouldShowFallback ? (
+                    // Fallback when no image or image fails to load
+                    <img
+                      src={fallbackImage}
+                      alt={campaign.title}
+                      className="w-full h-96 object-cover"
+                    />
+                  ) : (
+                    <>
+                      <img
+                        src={imageUrl}
+                        alt={campaign.title}
+                        className={`w-full h-96 object-cover transition-all duration-300 ${
+                          imageLoading ? "opacity-0" : "opacity-100"
+                        }`}
+                        onLoad={() => setImageLoading(false)}
+                        onError={() => {
+                          setImageError(true);
+                          setImageLoading(false);
+                        }}
+                      />
+                      {/* Loading placeholder */}
+                      {imageLoading && (
+                        <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                          <div className="text-center text-gray-500">
+                            <div className="w-8 h-8 border-2 border-gray-600 border-t-red-500 rounded-full animate-spin mx-auto mb-2"></div>
+                            <div className="text-sm">Loading image...</div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>
 

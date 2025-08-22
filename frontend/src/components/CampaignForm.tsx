@@ -150,12 +150,21 @@ const CampaignForm = () => {
         title: formData.title,
         description: formData.description,
         deadline: deadlineDate,
+        imageHash: formData.heroImageHash, // This will be stored client-side
       });
 
       toast({
         title: "Campaign Created Successfully!",
         description: `Your campaign has been deployed to the blockchain.`,
       });
+
+      // Store image with proper campaign address if we have it
+      if (formData.heroImageHash && result.campaignAddress) {
+        const { storeCampaignImage } = await import("@/lib/campaignImages");
+        storeCampaignImage(result.campaignAddress, formData.heroImageHash);
+        // Clean up temporary storage
+        localStorage.removeItem(`temp_${result.transactionHash}`);
+      }
 
       // Redirect to campaign detail page
       navigate(`/campaign/${result.campaignAddress}`);

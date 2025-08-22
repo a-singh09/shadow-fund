@@ -3,11 +3,12 @@ import { useAccount } from "wagmi";
 import { Wallet, Rocket, Users, TrendingUp, Eye, EyeOff } from "lucide-react";
 import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 import { useCampaignList } from "@/hooks/useCampaignList";
-import { formatEther } from "viem";
+import { formatUnits } from "viem";
 
 const DashboardStats = () => {
   const { address } = useAccount();
-  const { decryptedBalance } = useEERCWithKey("converter");
+  const { decryptedBalance, decimals, isInitialized, isRegistered } =
+    useEERCWithKey("converter");
   const { campaigns } = useCampaignList();
   const [showBalance, setShowBalance] = useState(false);
   const [stats, setStats] = useState([
@@ -46,6 +47,15 @@ const DashboardStats = () => {
   useEffect(() => {
     if (!address) return;
 
+    // Debug logging
+    console.log("DashboardStats - eERC state:", {
+      isInitialized,
+      isRegistered,
+      decryptedBalance: decryptedBalance?.toString(),
+      decimals: decimals?.toString(),
+      address,
+    });
+
     const userCampaigns = campaigns.filter(
       (campaign) => campaign.creator.toLowerCase() === address.toLowerCase(),
     );
@@ -67,20 +77,22 @@ const DashboardStats = () => {
     );
 
     const formatBalance = (balance: bigint | null): string => {
-      if (balance === null) return "0.00";
-      return parseFloat(formatEther(balance)).toFixed(4);
+      if (balance === null || !decimals) return "0.00";
+      return parseFloat(formatUnits(balance, Number(decimals))).toFixed(4);
     };
 
     setStats([
       {
         title: "Total Balance",
         value: showBalance
-          ? `${formatBalance(decryptedBalance)} eAVAX`
-          : "****** eAVAX",
+          ? `${formatBalance(decryptedBalance)} eTEST`
+          : "****** eTEST",
         change: showBalance
-          ? decryptedBalance && decryptedBalance > 0n
-            ? "Available for withdrawal"
-            : "No funds yet"
+          ? isInitialized && isRegistered
+            ? decryptedBalance && decryptedBalance > 0n
+              ? "Available for withdrawal"
+              : "No funds yet"
+            : "Please register with eERC20"
           : "Encrypted",
         icon: Wallet,
         color: "red",
