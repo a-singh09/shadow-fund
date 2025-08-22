@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Heart,
   Shield,
@@ -23,22 +23,7 @@ import DonationConfirmation from "./DonationConfirmation";
 import FinalTokenConverter from "./FinalTokenConverter";
 
 import { formatMessageForEERC, handleEERCError } from "@/utils/eercUtils";
-import { useEERC } from "@avalabs/eerc-sdk";
-import { usePublicClient, useWalletClient } from "wagmi";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { toast } from "sonner";
-import { error } from "console";
-import { error } from "console";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 
 interface Campaign {
   id: string;
@@ -430,14 +415,12 @@ const ReadyDonationSidebar: React.FC<{
           </div>
         </div>
 
-        {/* Token Converter - Show if registered but has low/no eERC20 balance */}
-        {isConnected &&
-          isRegistered &&
-          (decryptedBalance === null || decryptedBalance === 0n) && (
-            <div className="mb-6">
-              <FinalTokenConverter />
-            </div>
-          )}
+        {/* Token Converter - Show if registered so users can convert more tokens */}
+        {isConnected && isRegistered && (
+          <div className="mb-6">
+            <FinalTokenConverter />
+          </div>
+        )}
 
         {/* Balance Display */}
         {isConnected &&
@@ -594,238 +577,21 @@ const ReadyDonationSidebar: React.FC<{
   );
 };
 
-// Component that handles the different states before the donation sidebar is ready
-const EERCDonationSidebar: React.FC<{
-  campaign: Campaign;
-  campaignAddress?: string;
-  eercSDK: any;
-}> = ({ campaign, campaignAddress, eercSDK }) => {
-  const { toast } = useToast();
-  const { address } = useAccount();
-
-  const { isInitialized, isRegistered, generateDecryptionKey, register } =
-    eercSDK;
-
-  console.log("EERCDonationSidebar render:", {
-    isInitialized,
-    isRegistered,
-    address,
-  });
-
-  // Check if decryption key is stored in localStorage
-  const getStoredKey = () => {
-    if (!address) return undefined;
-    return localStorage.getItem(`eerc-key-converter-${address}`) || undefined;
-  };
-
-  const isDecryptionKeySet = !!getStoredKey();
-
-  const handleGenerateKey = async () => {
-    if (!generateDecryptionKey) return;
-
-    try {
-      console.log("Generating decryption key...");
-      const key = await generateDecryptionKey();
-      console.log("Key generated successfully");
-
-      // Store the key in localStorage
-      if (address && key) {
-        localStorage.setItem(`eerc-key-converter-${address}`, key);
-        console.log("Key stored in localStorage");
-      }
-
-      toast({
-        title: "Key Generated",
-        description:
-          "Decryption key generated successfully. You can now register with eERC20.",
-      });
-    } catch (error) {
-      console.error("Key generation failed:", error);
-      toast({
-        title: "Key Generation Failed",
-        description:
-          error instanceof Error ? error.message : "Failed to generate key",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRegister = async () => {
-    if (!register) return;
-
-    try {
-      console.log("Starting registration...");
-      await register();
-      console.log("Registration successful");
-
-      toast({
-        title: "Registration Successful",
-        description:
-          "You are now registered with eERC20 and can make private donations.",
-      });
-    } catch (error) {
-      console.error("Registration failed:", error);
-      toast({
-        title: "Registration Failed",
-        description:
-          error instanceof Error ? error.message : "Registration failed",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (!isInitialized) {
-    return (
-      <div className="sticky top-24">
-        <div className="glass rounded-2xl p-8 border border-red-500/20">
-          <div className="flex items-center space-x-2 text-yellow-400 text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Initializing eERC20 system...</span>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Loading circuit files and initializing SDK...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isDecryptionKeySet) {
-    return (
-      <div className="sticky top-24">
-        <div className="glass rounded-2xl p-8 border border-red-500/20">
-          <h3 className="text-xl font-bold text-white mb-4">
-            Generate Decryption Key
-          </h3>
-          <p className="text-gray-300 text-sm mb-4">
-            You need to generate a decryption key to make private donations.
-          </p>
-          <Button
-            onClick={handleGenerateKey}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            Generate Key
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isRegistered) {
-    return (
-      <div className="sticky top-24">
-        <div className="glass rounded-2xl p-8 border border-red-500/20">
-          <h3 className="text-xl font-bold text-white mb-4">
-            Register with eERC20
-          </h3>
-          <p className="text-gray-300 text-sm mb-4">
-            You need to register with the eERC20 system to make private
-            donations.
-          </p>
-          <Button
-            onClick={handleRegister}
-            className="w-full bg-green-600 hover:bg-green-700"
-          >
-            Register
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Only render ReadyDonationSidebar if ALL conditions are met
-  if (isInitialized && isRegistered && isDecryptionKeySet) {
-    return (
-      <ReadyDonationSidebar
-        campaign={campaign}
-        campaignAddress={campaignAddress}
-        eercSDK={eercSDK}
-      />
-    );
-  }
-
-  // If we somehow get here, show an error state
-  return (
-    <div className="sticky top-24">
-      <div className="glass rounded-2xl p-8 border border-red-500/20">
-        <div className="flex items-center space-x-2 text-red-400 text-sm">
-          <AlertCircle className="w-4 h-4" />
-          <span>Unexpected state - please refresh the page</span>
-        </div>
-        <div className="mt-2 text-xs text-gray-500">
-          Debug: Init={isInitialized ? "✓" : "✗"}, Registered=
-          {isRegistered ? "✓" : "✗"}, Key={isDecryptionKeySet ? "✓" : "✗"}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Wrapper component that handles eERC SDK initialization
+// Wrapper component that uses the useEERCWithKey hook
 const DonationSidebarContent: React.FC<{
   campaign: Campaign;
   campaignAddress?: string;
 }> = ({ campaign, campaignAddress }) => {
-  const { address } = useAccount();
-  const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
+  // Use the hook that properly handles key management
+  const eercSDK = useEERCWithKey("converter");
+  const { toast } = useToast();
 
-  // Circuit URLs
-  const circuitURLs = {
-    register: {
-      wasm: "/circuits/RegistrationCircuit.wasm",
-      zkey: "/circuits/RegistrationCircuit.groth16.zkey",
-    },
-    transfer: {
-      wasm: "/circuits/TransferCircuit.wasm",
-      zkey: "/circuits/TransferCircuit.groth16.zkey",
-    },
-    mint: {
-      wasm: "/circuits/MintCircuit.wasm",
-      zkey: "/circuits/MintCircuit.groth16.zkey",
-    },
-    withdraw: {
-      wasm: "/circuits/WithdrawCircuit.wasm",
-      zkey: "/circuits/WithdrawCircuit.groth16.zkey",
-    },
-    burn: {
-      wasm: "/circuits/TransferCircuit.wasm",
-      zkey: "/circuits/TransferCircuit.groth16.zkey",
-    },
-  };
-
-  // Get stored decryption key
-  const getStoredKey = () => {
-    if (!address) return undefined;
-    return localStorage.getItem(`eerc-key-converter-${address}`) || undefined;
-  };
-
-  // Initialize eERC SDK with stored key
-  let eercSDK;
-  try {
-    eercSDK = useEERC(
-      publicClient,
-      walletClient,
-      CONTRACTS.CONVERTER.ENCRYPTED_ERC,
-      circuitURLs,
-      getStoredKey(),
-    );
-  } catch (error) {
-    console.error("Error initializing eERC SDK:", error);
-    return (
-      <div className="sticky top-24">
-        <div className="glass rounded-2xl p-8 border border-red-500/20">
-          <div className="flex items-center space-x-2 text-red-400 text-sm">
-            <AlertCircle className="w-4 h-4" />
-            <span>Error initializing eERC SDK. Please refresh the page.</span>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Error: {error instanceof Error ? error.message : "Unknown error"}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  console.log("DonationSidebarContent - eERC SDK state:", {
+    isInitialized: eercSDK.isInitialized,
+    isRegistered: eercSDK.isRegistered,
+    keyLoaded: eercSDK.keyLoaded,
+    hasStoredKey: eercSDK.hasStoredKey(),
+  });
 
   // Safety check for eercSDK
   if (!eercSDK) {
@@ -841,8 +607,106 @@ const DonationSidebarContent: React.FC<{
     );
   }
 
+  // If not initialized yet, show loading
+  if (!eercSDK.keyLoaded) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Loading eERC20 keys...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no key is stored, show key generation
+  if (!eercSDK.hasStoredKey()) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <h3 className="text-xl font-bold text-white mb-4">
+            Generate Decryption Key
+          </h3>
+          <p className="text-gray-300 text-sm mb-4">
+            You need to generate a decryption key to make private donations.
+          </p>
+          <Button
+            onClick={async () => {
+              try {
+                await eercSDK.generateAndStoreKey();
+                toast({
+                  title: "Key Generated",
+                  description:
+                    "Decryption key generated successfully. You can now register with eERC20.",
+                });
+              } catch (error) {
+                console.error("Key generation failed:", error);
+                toast({
+                  title: "Key Generation Failed",
+                  description:
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to generate key",
+                  variant: "destructive",
+                });
+              }
+            }}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Generate Key
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // If not registered, show registration
+  if (!eercSDK.isRegistered) {
+    return (
+      <div className="sticky top-24">
+        <div className="glass rounded-2xl p-8 border border-red-500/20">
+          <h3 className="text-xl font-bold text-white mb-4">
+            Register with eERC20
+          </h3>
+          <p className="text-gray-300 text-sm mb-4">
+            You need to register with the eERC20 system to make private
+            donations.
+          </p>
+          <Button
+            onClick={async () => {
+              try {
+                await eercSDK.registerWithKey();
+                toast({
+                  title: "Registration Successful",
+                  description:
+                    "You are now registered with eERC20 and can make private donations.",
+                });
+              } catch (error) {
+                console.error("Registration failed:", error);
+                toast({
+                  title: "Registration Failed",
+                  description:
+                    error instanceof Error
+                      ? error.message
+                      : "Registration failed",
+                  variant: "destructive",
+                });
+              }
+            }}
+            className="w-full bg-green-600 hover:bg-green-700"
+          >
+            Register
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // If everything is ready, show the full donation sidebar
   return (
-    <EERCDonationSidebar
+    <ReadyDonationSidebar
       campaign={campaign}
       campaignAddress={campaignAddress}
       eercSDK={eercSDK}

@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { CONTRACTS } from "@/config/contracts";
-import EERCWithFallback from "./EERCWithFallback";
+import { useEERCWithKey } from "@/hooks/useEERCWithKey";
 
 // Component that only renders when fully ready and calls useEncryptedBalance
 const ReadyTokenConverter: React.FC<{
@@ -287,158 +287,13 @@ const ReadyTokenConverter: React.FC<{
   );
 };
 
-// Component that handles the different states before the converter is ready
-const EERCTokenConverter: React.FC<{
-  eercSDK: any;
-  erc20Balance: bigint | undefined;
-  erc20Decimals: number | undefined;
-  erc20Symbol: string | undefined;
-}> = ({ eercSDK, erc20Balance, erc20Decimals, erc20Symbol }) => {
-  const { toast } = useToast();
-  const { address } = useAccount();
-
-  const { isInitialized, isRegistered, generateDecryptionKey, register } =
-    eercSDK;
-
-  console.log("EERCTokenConverter render:", {
-    isInitialized,
-    isRegistered,
-    address,
-  });
-
-  // Use the SDK's built-in key management instead of manual localStorage
-  const isDecryptionKeySet = eercSDK.isDecryptionKeySet || false;
-
-  const handleGenerateKey = async () => {
-    if (!generateDecryptionKey) return;
-
-    try {
-      console.log("Generating decryption key...");
-      await generateDecryptionKey();
-      console.log("Key generated successfully");
-
-      toast({
-        title: "Key Generated",
-        description:
-          "Decryption key generated successfully. You can now register with eERC20.",
-      });
-    } catch (error) {
-      console.error("Key generation failed:", error);
-      toast({
-        title: "Key Generation Failed",
-        description:
-          error instanceof Error ? error.message : "Failed to generate key",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRegister = async () => {
-    if (!register) return;
-
-    try {
-      console.log("Starting registration...");
-      await register();
-      console.log("Registration successful");
-
-      toast({
-        title: "Registration Successful",
-        description:
-          "You are now registered with eERC20 and can convert tokens.",
-      });
-    } catch (error) {
-      console.error("Registration failed:", error);
-      toast({
-        title: "Registration Failed",
-        description:
-          error instanceof Error ? error.message : "Registration failed",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (!isInitialized) {
-    return (
-      <div className="p-6 glass rounded-2xl border border-gray-700">
-        <div className="flex items-center space-x-2 text-yellow-400 text-sm">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Initializing eERC20 system...</span>
-        </div>
-        <div className="mt-2 text-xs text-gray-500">
-          Loading circuit files and initializing SDK...
-        </div>
-      </div>
-    );
-  }
-
-  if (!isDecryptionKeySet) {
-    return (
-      <div className="p-6 glass rounded-2xl border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4">
-          Generate Decryption Key
-        </h3>
-        <p className="text-gray-300 text-sm mb-4">
-          You need to generate a decryption key to use eERC20 features.
-        </p>
-        <Button
-          onClick={handleGenerateKey}
-          className="w-full bg-blue-600 hover:bg-blue-700"
-        >
-          Generate Key
-        </Button>
-      </div>
-    );
-  }
-
-  if (!isRegistered) {
-    return (
-      <div className="p-6 glass rounded-2xl border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4">
-          Register with eERC20
-        </h3>
-        <p className="text-gray-300 text-sm mb-4">
-          You need to register with the eERC20 system to convert tokens.
-        </p>
-        <Button
-          onClick={handleRegister}
-          className="w-full bg-green-600 hover:bg-green-700"
-        >
-          Register
-        </Button>
-      </div>
-    );
-  }
-
-  // Only render ReadyTokenConverter if ALL conditions are met
-  if (isInitialized && isRegistered && isDecryptionKeySet) {
-    return (
-      <ReadyTokenConverter
-        eercSDK={eercSDK}
-        erc20Balance={erc20Balance}
-        erc20Decimals={erc20Decimals}
-        erc20Symbol={erc20Symbol}
-      />
-    );
-  }
-
-  // If we somehow get here, show an error state
-  return (
-    <div className="p-6 glass rounded-2xl border border-gray-700">
-      <div className="flex items-center space-x-2 text-red-400 text-sm">
-        <AlertCircle className="w-4 h-4" />
-        <span>Unexpected state - please refresh the page</span>
-      </div>
-      <div className="mt-2 text-xs text-gray-500">
-        Debug: Init={isInitialized ? "✓" : "✗"}, Registered=
-        {isRegistered ? "✓" : "✗"}, Key={isDecryptionKeySet ? "✓" : "✗"}
-      </div>
-    </div>
-  );
-};
-
 // Wrapper component that handles ERC20 data fetching
-const TokenConverterContent: React.FC<{ eercSDK: any }> = ({ eercSDK }) => {
+const TokenConverterContent: React.FC = () => {
   const { address } = useAccount();
+
+  // Use the hook that properly handles key management
+  const eercSDK = useEERCWithKey("converter");
+  const { toast } = useToast();
 
   // Always call hooks first, before any conditional returns
   // Read ERC20 balance
@@ -500,8 +355,99 @@ const TokenConverterContent: React.FC<{ eercSDK: any }> = ({ eercSDK }) => {
     );
   }
 
+  // If not loaded yet, show loading
+  if (!eercSDK.keyLoaded) {
+    return (
+      <div className="p-6 glass rounded-2xl border border-gray-700">
+        <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Loading eERC20 keys...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If no key is stored, show key generation
+  if (!eercSDK.hasStoredKey()) {
+    return (
+      <div className="p-6 glass rounded-2xl border border-gray-700">
+        <h3 className="text-xl font-bold text-white mb-4">
+          Generate Decryption Key
+        </h3>
+        <p className="text-gray-300 text-sm mb-4">
+          You need to generate a decryption key to use eERC20 features.
+        </p>
+        <Button
+          onClick={async () => {
+            try {
+              await eercSDK.generateAndStoreKey();
+              toast({
+                title: "Key Generated",
+                description:
+                  "Decryption key generated successfully. You can now register with eERC20.",
+              });
+            } catch (error) {
+              console.error("Key generation failed:", error);
+              toast({
+                title: "Key Generation Failed",
+                description:
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to generate key",
+                variant: "destructive",
+              });
+            }
+          }}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          Generate Key
+        </Button>
+      </div>
+    );
+  }
+
+  // If not registered, show registration
+  if (!eercSDK.isRegistered) {
+    return (
+      <div className="p-6 glass rounded-2xl border border-gray-700">
+        <h3 className="text-xl font-bold text-white mb-4">
+          Register with eERC20
+        </h3>
+        <p className="text-gray-300 text-sm mb-4">
+          You need to register with the eERC20 system to convert tokens.
+        </p>
+        <Button
+          onClick={async () => {
+            try {
+              await eercSDK.registerWithKey();
+              toast({
+                title: "Registration Successful",
+                description:
+                  "You are now registered with eERC20 and can convert tokens.",
+              });
+            } catch (error) {
+              console.error("Registration failed:", error);
+              toast({
+                title: "Registration Failed",
+                description:
+                  error instanceof Error
+                    ? error.message
+                    : "Registration failed",
+                variant: "destructive",
+              });
+            }
+          }}
+          className="w-full bg-green-600 hover:bg-green-700"
+        >
+          Register
+        </Button>
+      </div>
+    );
+  }
+
+  // If everything is ready, show the converter
   return (
-    <EERCTokenConverter
+    <ReadyTokenConverter
       eercSDK={eercSDK}
       erc20Balance={erc20Balance}
       erc20Decimals={erc20Decimals}
@@ -524,11 +470,7 @@ const FinalTokenConverter: React.FC = () => {
     );
   }
 
-  return (
-    <EERCWithFallback mode="converter">
-      {(eercSDK) => <TokenConverterContent eercSDK={eercSDK} />}
-    </EERCWithFallback>
-  );
+  return <TokenConverterContent />;
 };
 
 export default FinalTokenConverter;
