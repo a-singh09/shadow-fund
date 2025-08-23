@@ -6,6 +6,10 @@ _Built for the [Avalanche Build Hackathon](https://build.avax.network/hackathons
 
 ---
 
+#### Pitch Deck: https://gamma.app/docs/ShadowFund-Privacy-Preserving-Funding-Evolving-to-PIaaS-gno62qbscovjd7x
+
+#### Video Explanation: https://loom.com/share/folder/51ea8a14f98543d382a1d61014ce1b2d
+
 ## 🎯 Vision
 
 ShadowFund is evolving from a privacy-preserving crowdfunding platform into a **comprehensive Privacy Infrastructure as a Service (PIaaS)** solution. Using Avalanche's cutting-edge **encrypted ERC20 (eERC20)** protocol, we enable:
