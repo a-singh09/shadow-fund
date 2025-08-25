@@ -2,6 +2,7 @@ import { Plus, Search, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-bg.jpg";
+import ConstellationEffect from "./ConstellationEffect";
 
 const HeroSection = () => {
   return (
@@ -84,23 +85,8 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Floating Elements */}
-      <div
-        className="absolute top-20 left-10 w-4 h-4 bg-red-400/30 rounded-full animate-float"
-        style={{ animationDelay: "0s" }}
-      />
-      <div
-        className="absolute top-40 right-20 w-6 h-6 bg-red-500/20 rounded-full animate-float"
-        style={{ animationDelay: "1s" }}
-      />
-      <div
-        className="absolute bottom-40 left-20 w-3 h-3 bg-red-300/40 rounded-full animate-float"
-        style={{ animationDelay: "2s" }}
-      />
-      <div
-        className="absolute bottom-20 right-10 w-5 h-5 bg-red-400/25 rounded-full animate-float"
-        style={{ animationDelay: "1.5s" }}
-      />
+      {/* Constellation Effect */}
+      <ConstellationEffect />
     </section>
   );
 };

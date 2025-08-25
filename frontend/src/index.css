@@ -222,6 +222,11 @@
   /* Constellation-specific animations */
   .constellation-glow {
     animation: constellationGlow 3s ease-in-out infinite alternate;
+    transition: all 0.2s ease-out;
+  }
+
+  .constellation-glow:hover {
+    animation: constellationGlowFast 0.3s ease-in-out infinite alternate;
   }
 
   @keyframes constellationGlow {
@@ -234,8 +239,23 @@
     }
   }
 
+  @keyframes constellationGlowFast {
+    from {
+      filter: drop-shadow(0 0 8px currentColor);
+    }
+
+    to {
+      filter: drop-shadow(0 0 25px currentColor) drop-shadow(0 0 40px currentColor);
+    }
+  }
+
   .star-twinkle {
     animation: starTwinkle 2s ease-in-out infinite;
+    transition: all 0.2s ease-out;
+  }
+
+  .star-twinkle:hover {
+    animation: starTwinkleFast 0.2s ease-in-out infinite;
   }
 
   @keyframes starTwinkle {
@@ -252,11 +272,46 @@
     }
   }
 
+  @keyframes starTwinkleFast {
+
+    0%,
+    100% {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
+
   .energy-flow {
     animation: energyFlow 2s linear infinite;
+    transition: all 0.2s ease-out;
+  }
+
+  .energy-flow:hover {
+    animation: energyFlowFast 0.4s linear infinite;
   }
 
   @keyframes energyFlow {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+
+    50% {
+      opacity: 1;
+    }
+
+    100% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes energyFlowFast {
     0% {
       transform: translateX(-100%);
       opacity: 0;
@@ -317,5 +372,110 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* 
+========================================
+   CONSTELLATION EFFECTS - SCOPED STYLES
+   ======================================== */
+
+/* Constellation container - only affects constellation elements */
+.constellation-container {
+  z-index: 5;
+}
+
+/* Constellation SVG lines */
+.constellation-svg {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.constellation-container:hover .constellation-svg {
+  opacity: 1;
+}
+
+/* Individual constellation lines */
+.constellation-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  opacity: 0;
+  transition: all 0.2s ease-out;
+}
+
+.constellation-container:hover .constellation-line {
+  opacity: 1;
+  animation: constellation-draw-fast 0.3s ease-out forwards;
+}
+
+/* Constellation points */
+.constellation-point {
+  z-index: 6;
+  animation: constellation-float-slow 20s ease-in-out infinite;
+  transition: all 0.2s ease-out;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.constellation-container:hover .constellation-point {
+  animation: constellation-glow-fast 0.3s ease-in-out infinite alternate,
+    constellation-float-fast 1s ease-in-out infinite;
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 25px currentColor);
+}
+
+/* Constellation-specific keyframes */
+@keyframes constellation-draw-fast {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 20px currentColor);
+  }
+}
+
+@keyframes constellation-glow-fast {
+  0% {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+
+  100% {
+    filter: drop-shadow(0 0 25px currentColor) drop-shadow(0 0 40px currentColor);
+  }
+}
+
+@keyframes constellation-float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  33% {
+    transform: translateY(-20px) rotate(2deg);
+  }
+
+  66% {
+    transform: translateY(10px) rotate(-1deg);
+  }
+}
+
+@keyframes constellation-float-fast {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg) scale(1.2);
+  }
+
+  33% {
+    transform: translateY(-30px) rotate(3deg) scale(1.3);
+  }
+
+  66% {
+    transform: translateY(15px) rotate(-2deg) scale(1.1);
   }
 }
