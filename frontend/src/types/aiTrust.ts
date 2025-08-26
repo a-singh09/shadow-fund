@@ -283,3 +283,48 @@ export interface RequestMetrics {
   averageResponseTime: number;
   lastRequestTime: Date;
 }
+
+// Storage and database types
+export interface TrustDataSchema {
+  trustAnalysis: {
+    key: string;
+    value: TrustAnalysisResult;
+    indexes: {
+      creatorAddress: string;
+      trustLevel: string;
+      analysisTimestamp: Date;
+      expiresAt: Date;
+    };
+  };
+  credibilityCache: {
+    key: string;
+    value: CredibilityScore;
+    indexes: {
+      score: number;
+      lastUpdated: Date;
+    };
+  };
+}
+
+export interface AnalysisMetrics {
+  date: string;
+  totalAnalyses: number;
+  successfulAnalyses: number;
+  failedAnalyses: number;
+  averageProcessingTime: number;
+  trustLevelDistribution: {
+    HIGH: number;
+    MEDIUM: number;
+    LOW: number;
+    FLAGGED: number;
+  };
+  errorsByCategory: Record<string, number>;
+}
+
+export interface StorageStats {
+  trustAnalyses: number;
+  credibilityScores: number;
+  duplicationCache: number;
+  visualCache: number;
+  totalSize: number;
+}

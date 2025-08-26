@@ -1,5 +1,7 @@
 import { geminiClient } from "./geminiClient";
 import { rateLimiter } from "./rateLimiter";
+import { trustDataStorage } from "./trustDataStorage";
+import { aiTrustErrorHandler } from "./aiTrustErrorHandler";
 import {
   TrustAnalysisResult,
   CampaignData,
@@ -14,8 +16,10 @@ import {
 } from "../types/aiTrust";
 
 export class AITrustService {
-  private cache = new Map<string, TrustAnalysisResult>();
+  private memoryCache = new Map<string, TrustAnalysisResult>();
   private readonly cacheExpiryMs = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly maxMemoryCacheSize = 100; // Limit memory cache size
+  private analysisInProgress = new Set<string>(); // Track ongoing analyses
 
   /**
    * Main analysis entry point - orchestrates all AI analysis components
@@ -26,50 +30,77 @@ export class AITrustService {
     const campaignId = this.generateCampaignId(campaignData);
 
     try {
-      // Check cache first
+      // Prevent duplicate analyses
+      if (this.analysisInProgress.has(campaignId)) {
+        // Wait for ongoing analysis to complete
+        return await this.waitForAnalysis(campaignId);
+      }
+
+      // Check cache first (memory then persistent storage)
       const cachedResult = await this.getCachedAnalysis(campaignId);
       if (cachedResult && !this.isCacheExpired(cachedResult)) {
         return cachedResult;
       }
 
-      // Perform parallel analysis
-      const [credibilityScore, duplicationCheck, visualVerification] =
-        await Promise.allSettled([
-          this.calculateCredibilityScore(campaignData.metadata),
-          this.checkNarrativeDuplication(campaignData.content),
-          this.verifyVisualContent(campaignData.mediaUrls),
-        ]);
+      // Mark analysis as in progress
+      this.analysisInProgress.add(campaignId);
 
-      // Process results with error handling
-      const result: TrustAnalysisResult = {
-        campaignId,
-        credibilityScore: this.extractResult(
+      try {
+        // Perform parallel analysis with enhanced error handling
+        const analysisPromises = [
+          this.executeWithFallback(
+            () => this.calculateCredibilityScore(campaignData.metadata),
+            () => this.getFallbackCredibilityScore(),
+            "CREDIBILITY_ANALYSIS",
+          ),
+          this.executeWithFallback(
+            () => this.checkNarrativeDuplication(campaignData.content),
+            () => this.getFallbackDuplicationResult(),
+            "DUPLICATION_ANALYSIS",
+          ),
+          this.executeWithFallback(
+            () => this.verifyVisualContent(campaignData.mediaUrls),
+            () => this.getFallbackVisualVerification(),
+            "VISUAL_ANALYSIS",
+          ),
+        ];
+
+        const [credibilityScore, duplicationCheck, visualVerification] =
+          await Promise.all(analysisPromises);
+
+        // Create analysis result
+        const result: TrustAnalysisResult = {
+          campaignId,
           credibilityScore,
-          this.getFallbackCredibilityScore(),
-        ),
-        duplicationCheck: this.extractResult(
           duplicationCheck,
-          this.getFallbackDuplicationResult(),
-        ),
-        visualVerification: this.extractResult(
           visualVerification,
-          this.getFallbackVisualVerification(),
-        ),
-        overallTrustLevel: "MEDIUM", // Will be calculated below
-        analysisTimestamp: new Date(),
-        expiresAt: new Date(Date.now() + this.cacheExpiryMs),
-      };
+          overallTrustLevel: "MEDIUM", // Will be calculated below
+          analysisTimestamp: new Date(),
+          expiresAt: new Date(Date.now() + this.cacheExpiryMs),
+        };
 
-      // Calculate overall trust level
-      result.overallTrustLevel = this.calculateOverallTrustLevel(result);
+        // Calculate overall trust level
+        result.overallTrustLevel = this.calculateOverallTrustLevel(result);
 
-      // Cache the result
-      this.cache.set(campaignId, result);
+        // Store in both memory and persistent cache
+        await this.storeAnalysisResult(result);
 
-      return result;
+        return result;
+      } finally {
+        // Always remove from in-progress set
+        this.analysisInProgress.delete(campaignId);
+      }
     } catch (error) {
       console.error("Campaign analysis failed:", error);
-      throw this.handleError(error, "CAMPAIGN_ANALYSIS");
+
+      // Try to provide a fallback result even on complete failure
+      const fallbackResult = await this.createFallbackAnalysisResult(
+        campaignId,
+        campaignData,
+      );
+      await this.storeAnalysisResult(fallbackResult);
+
+      return fallbackResult;
     }
   }
 
@@ -250,34 +281,207 @@ export class AITrustService {
   }
 
   /**
-   * Get cached analysis result
+   * Get cached analysis result (checks memory cache first, then persistent storage)
    */
   async getCachedAnalysis(
     campaignId: string,
   ): Promise<TrustAnalysisResult | null> {
-    const cached = this.cache.get(campaignId);
-    if (cached && !this.isCacheExpired(cached)) {
-      return cached;
+    // Check memory cache first
+    const memoryResult = this.memoryCache.get(campaignId);
+    if (memoryResult && !this.isCacheExpired(memoryResult)) {
+      return memoryResult;
     }
+
+    // Check persistent storage
+    try {
+      const persistentResult =
+        await trustDataStorage.getTrustAnalysis(campaignId);
+      if (persistentResult && !this.isCacheExpired(persistentResult)) {
+        // Store in memory cache for faster access
+        this.addToMemoryCache(campaignId, persistentResult);
+        return persistentResult;
+      }
+    } catch (error) {
+      console.warn("Failed to retrieve from persistent cache:", error);
+    }
+
     return null;
   }
 
   /**
-   * Invalidate cache for a campaign
+   * Invalidate cache for a campaign (both memory and persistent)
    */
   async invalidateCache(campaignId: string): Promise<void> {
-    this.cache.delete(campaignId);
+    // Remove from memory cache
+    this.memoryCache.delete(campaignId);
+
+    // Remove from persistent storage
+    try {
+      await trustDataStorage.deleteTrustAnalysis(campaignId);
+    } catch (error) {
+      console.warn("Failed to invalidate persistent cache:", error);
+    }
   }
 
   /**
-   * Clear expired cache entries
+   * Execute analysis with fallback on error
    */
-  private cleanupCache(): void {
-    const now = new Date();
-    for (const [key, value] of this.cache.entries()) {
-      if (value.expiresAt < now) {
-        this.cache.delete(key);
+  private async executeWithFallback<T>(
+    analysisFunction: () => Promise<T>,
+    fallbackFunction: () => T,
+    context: string,
+  ): Promise<T> {
+    try {
+      return await analysisFunction();
+    } catch (error) {
+      console.warn(`${context} failed, using fallback:`, error);
+
+      // Handle error through error handler
+      const aiError = this.createAITrustError(error, context);
+      const resolution = await aiTrustErrorHandler.handleError(aiError);
+
+      if (resolution.action === "RETRY" && resolution.retryAfter) {
+        // Wait and retry once
+        await this.sleep(resolution.retryAfter);
+        try {
+          return await analysisFunction();
+        } catch (retryError) {
+          console.warn(`${context} retry failed, using fallback:`, retryError);
+          return fallbackFunction();
+        }
       }
+
+      return fallbackFunction();
+    }
+  }
+
+  /**
+   * Wait for ongoing analysis to complete
+   */
+  private async waitForAnalysis(
+    campaignId: string,
+  ): Promise<TrustAnalysisResult> {
+    const maxWaitTime = 30000; // 30 seconds
+    const checkInterval = 500; // 500ms
+    let waited = 0;
+
+    while (this.analysisInProgress.has(campaignId) && waited < maxWaitTime) {
+      await this.sleep(checkInterval);
+      waited += checkInterval;
+    }
+
+    // Check if analysis completed and result is available
+    const result = await this.getCachedAnalysis(campaignId);
+    if (result) {
+      return result;
+    }
+
+    // If still no result, throw error
+    throw new Error("Analysis timeout - unable to complete or retrieve result");
+  }
+
+  /**
+   * Store analysis result in both memory and persistent cache
+   */
+  private async storeAnalysisResult(
+    result: TrustAnalysisResult,
+  ): Promise<void> {
+    // Store in memory cache
+    this.addToMemoryCache(result.campaignId, result);
+
+    // Store in persistent storage
+    try {
+      await trustDataStorage.storeTrustAnalysis(result);
+    } catch (error) {
+      console.warn("Failed to store in persistent cache:", error);
+    }
+  }
+
+  /**
+   * Add result to memory cache with size management
+   */
+  private addToMemoryCache(
+    campaignId: string,
+    result: TrustAnalysisResult,
+  ): void {
+    // Remove oldest entries if cache is full
+    if (this.memoryCache.size >= this.maxMemoryCacheSize) {
+      const oldestKey = this.memoryCache.keys().next().value;
+      if (oldestKey) {
+        this.memoryCache.delete(oldestKey);
+      }
+    }
+
+    this.memoryCache.set(campaignId, result);
+  }
+
+  /**
+   * Create fallback analysis result for complete failures
+   */
+  private async createFallbackAnalysisResult(
+    campaignId: string,
+    campaignData: CampaignData,
+  ): Promise<TrustAnalysisResult> {
+    return {
+      campaignId,
+      credibilityScore: this.getFallbackCredibilityScore(),
+      duplicationCheck: this.getFallbackDuplicationResult(),
+      visualVerification: this.getFallbackVisualVerification(),
+      overallTrustLevel: "MEDIUM",
+      analysisTimestamp: new Date(),
+      expiresAt: new Date(Date.now() + this.cacheExpiryMs),
+    };
+  }
+
+  /**
+   * Create standardized AI Trust Error
+   */
+  private createAITrustError(error: any, context: string): AITrustError {
+    if (error?.code && error?.category) {
+      // Already an AITrustError
+      return error;
+    }
+
+    return {
+      code: "ANALYSIS_ERROR",
+      message: `${context} failed: ${error?.message || "Unknown error"}`,
+      category: "ANALYSIS",
+      retryable: true,
+      fallbackAction: "Use fallback analysis results",
+    };
+  }
+
+  /**
+   * Sleep utility for delays
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Clear expired cache entries from memory
+   */
+  private cleanupMemoryCache(): void {
+    const now = new Date();
+    for (const [key, value] of this.memoryCache.entries()) {
+      if (value.expiresAt < now) {
+        this.memoryCache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Perform comprehensive cache cleanup
+   */
+  async performCacheCleanup(): Promise<void> {
+    // Clean memory cache
+    this.cleanupMemoryCache();
+
+    // Clean persistent storage
+    try {
+      await trustDataStorage.cleanupExpiredEntries();
+    } catch (error) {
+      console.warn("Failed to cleanup persistent storage:", error);
     }
   }
 
@@ -439,20 +643,83 @@ export class AITrustService {
   }
 
   /**
-   * Get service status and metrics
+   * Get comprehensive service status and metrics
    */
-  getServiceStatus(): {
-    cacheSize: number;
+  async getServiceStatus(): Promise<{
+    memoryCacheSize: number;
+    persistentCacheStats: any;
     rateLimiterStatus: any;
+    analysisInProgress: number;
     isHealthy: boolean;
-  } {
-    this.cleanupCache();
+    lastCleanup: Date;
+  }> {
+    // Perform cleanup
+    await this.performCacheCleanup();
+
+    // Get persistent storage stats
+    let persistentStats = null;
+    try {
+      persistentStats = await trustDataStorage.getStorageStats();
+    } catch (error) {
+      console.warn("Failed to get persistent storage stats:", error);
+    }
 
     return {
-      cacheSize: this.cache.size,
+      memoryCacheSize: this.memoryCache.size,
+      persistentCacheStats: persistentStats,
       rateLimiterStatus: rateLimiter.getQueueStatus(),
-      isHealthy: true, // Could include more health checks
+      analysisInProgress: this.analysisInProgress.size,
+      isHealthy: this.checkServiceHealth(),
+      lastCleanup: new Date(),
     };
+  }
+
+  /**
+   * Check overall service health
+   */
+  private checkServiceHealth(): boolean {
+    try {
+      // Check if essential services are available
+      const rateLimiterHealthy = rateLimiter.getQueueStatus().queueLength < 50;
+      const memoryUsageHealthy =
+        this.memoryCache.size < this.maxMemoryCacheSize;
+      const noStuckAnalyses = this.analysisInProgress.size < 10;
+
+      return rateLimiterHealthy && memoryUsageHealthy && noStuckAnalyses;
+    } catch (error) {
+      console.error("Health check failed:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Get analysis metrics for monitoring
+   */
+  async getAnalysisMetrics(days: number = 7): Promise<any> {
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+
+    try {
+      return await trustDataStorage.getAnalysisMetrics(startDate, endDate);
+    } catch (error) {
+      console.warn("Failed to get analysis metrics:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Force cache refresh for a campaign
+   */
+  async refreshCampaignAnalysis(
+    campaignData: CampaignData,
+  ): Promise<TrustAnalysisResult> {
+    const campaignId = this.generateCampaignId(campaignData);
+
+    // Invalidate existing cache
+    await this.invalidateCache(campaignId);
+
+    // Perform fresh analysis
+    return await this.analyzeCampaign(campaignData);
   }
 }
 

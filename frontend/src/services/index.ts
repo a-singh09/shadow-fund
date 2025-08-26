@@ -6,6 +6,7 @@ export {
   aiTrustErrorHandler,
   AITrustErrorHandler,
 } from "./aiTrustErrorHandler";
+export { trustDataStorage, TrustDataStorage } from "./trustDataStorage";
 
 // Re-export types for convenience
 export type {
