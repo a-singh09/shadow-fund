@@ -2,8 +2,9 @@
 export { default as TrustBadge } from "./TrustBadge";
 export {
   default as CredibilityBreakdown,
-  defaultCredibilityFactors,
+  getTrustLevel,
 } from "./CredibilityBreakdown";
+export { default as ImprovementSuggestions } from "./ImprovementSuggestions";
 export { default as DuplicationWarning } from "./DuplicationWarning";
 export {
   default as VisualIntegrityBadge,
@@ -14,6 +15,11 @@ export {
   generateMockFundFlowData,
 } from "./FundFlowDiagram";
 export { default as AITrustDashboard } from "./AITrustDashboard";
+export { default as CredibilityAdmin } from "./CredibilityAdmin";
 
-// Types
-export type { default as TrustLevel } from "./TrustBadge";
+// Hooks
+export {
+  useCredibilityScore,
+  useTrustLevel,
+  useRealTimeCredibilityScore,
+} from "../../hooks/useCredibilityScore";

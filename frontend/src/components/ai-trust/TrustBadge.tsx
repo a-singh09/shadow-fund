@@ -4,14 +4,20 @@ import {
   AlertTriangle,
   XCircle,
   Info,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TrustLevel } from "@/types/aiTrust";
 
 interface TrustBadgeProps {
   score: number; // 0-100
-  level: "high" | "medium" | "low" | "unverified";
+  level: TrustLevel;
   size?: "sm" | "md" | "lg";
   showScore?: boolean;
+  showDetails?: boolean;
+  isLoading?: boolean;
+  confidence?: number; // 0-1
+  onClick?: () => void;
   className?: string;
 }
 
@@ -20,11 +26,15 @@ const TrustBadge = ({
   level,
   size = "md",
   showScore = true,
+  showDetails = false,
+  isLoading = false,
+  confidence,
+  onClick,
   className,
 }: TrustBadgeProps) => {
   const getConfig = () => {
     switch (level) {
-      case "high":
+      case "HIGH":
         return {
           icon: CheckCircle,
           color: "text-green-400",
@@ -33,7 +43,7 @@ const TrustBadge = ({
           label: "High Trust",
           glow: "shadow-green-500/25",
         };
-      case "medium":
+      case "MEDIUM":
         return {
           icon: Shield,
           color: "text-yellow-400",
@@ -42,7 +52,7 @@ const TrustBadge = ({
           label: "Medium Trust",
           glow: "shadow-yellow-500/25",
         };
-      case "low":
+      case "LOW":
         return {
           icon: AlertTriangle,
           color: "text-orange-400",
@@ -51,14 +61,14 @@ const TrustBadge = ({
           label: "Low Trust",
           glow: "shadow-orange-500/25",
         };
-      case "unverified":
+      case "FLAGGED":
         return {
           icon: XCircle,
-          color: "text-gray-400",
-          bgColor: "bg-gray-500/20",
-          borderColor: "border-gray-500/30",
-          label: "Unverified",
-          glow: "shadow-gray-500/25",
+          color: "text-red-400",
+          bgColor: "bg-red-500/20",
+          borderColor: "border-red-500/30",
+          label: "Flagged",
+          glow: "shadow-red-500/25",
         };
     }
   };
@@ -75,23 +85,49 @@ const TrustBadge = ({
   };
 
   const config = getConfig();
-  const Icon = config.icon;
+  const Icon = isLoading ? Loader2 : config.icon;
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
 
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 rounded-full glass border transition-all duration-300 hover-lift",
+        "inline-flex items-center gap-2 rounded-full glass border transition-all duration-300",
         config.bgColor,
         config.borderColor,
         config.glow,
         getSizeClasses(),
+        onClick && "cursor-pointer hover-lift hover:scale-105",
         className,
       )}
+      onClick={handleClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
-      <Icon className={cn("w-4 h-4", config.color)} />
-      <span className={cn("font-medium", config.color)}>
-        {showScore ? `${score}% ${config.label}` : config.label}
-      </span>
+      <Icon
+        className={cn("w-4 h-4", config.color, isLoading && "animate-spin")}
+      />
+      <div className="flex flex-col">
+        <span className={cn("font-medium", config.color)}>
+          {isLoading
+            ? "Analyzing..."
+            : showScore
+              ? `${score}% ${config.label}`
+              : config.label}
+        </span>
+        {showDetails && confidence && !isLoading && (
+          <span className="text-xs text-gray-400">
+            {Math.round(confidence * 100)}% confidence
+          </span>
+        )}
+      </div>
+      {showDetails && onClick && !isLoading && (
+        <Info className="w-3 h-3 text-gray-400 ml-1" />
+      )}
     </div>
   );
 };

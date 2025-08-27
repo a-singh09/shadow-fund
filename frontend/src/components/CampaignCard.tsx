@@ -9,7 +9,8 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { getIPFSUrl } from "@/lib/ipfs";
 import { getCampaignFallbackImage } from "@/lib/placeholders";
-import { TrustBadge } from "./ai-trust";
+import { TrustBadge, useCredibilityScore, getTrustLevel } from "./ai-trust";
+import { CampaignMetadata, ZKProof } from "@/types/aiTrust";
 
 interface CampaignCardProps {
   id: string;
@@ -22,6 +23,8 @@ interface CampaignCardProps {
   daysLeft: number;
   progressPercentage: number;
   isActive?: boolean;
+  creationDate?: Date;
+  location?: string;
 }
 
 const CampaignCard = ({
@@ -35,9 +38,32 @@ const CampaignCard = ({
   daysLeft,
   progressPercentage,
   isActive = true,
+  creationDate,
+  location,
 }: CampaignCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+
+  // Create campaign metadata for credibility scoring
+  const campaignMetadata: CampaignMetadata = {
+    title,
+    description,
+    category,
+    location: location || "",
+    creatorAddress: creator,
+    creationDate: creationDate || new Date(),
+    zkProofs: [] as ZKProof[], // Would be populated with actual ZK proofs from blockchain
+    publicVerifications: [],
+  };
+
+  // Get credibility score for this campaign
+  const {
+    score: credibilityScore,
+    trustLevel,
+    isLoading: isScoreLoading,
+  } = useCredibilityScore({
+    metadata: campaignMetadata,
+  });
 
   // Get proper image URL (handle IPFS hashes and data URLs)
   const getImageUrl = (imageUrl: string) => {
@@ -134,16 +160,12 @@ const CampaignCard = ({
               {title}
             </h3>
             <TrustBadge
-              score={Math.floor(Math.random() * 40) + 60} // Random score 60-100 for demo
-              level={
-                Math.random() > 0.7
-                  ? "high"
-                  : Math.random() > 0.4
-                    ? "medium"
-                    : "low"
-              }
+              score={credibilityScore?.score || 0}
+              level={trustLevel}
               size="sm"
               showScore={false}
+              isLoading={isScoreLoading}
+              confidence={credibilityScore?.confidence}
             />
           </div>
           <p className="text-xs sm:text-sm text-gray-400">by {creator}</p>

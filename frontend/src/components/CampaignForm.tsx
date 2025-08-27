@@ -22,10 +22,12 @@ import ImageUpload from "./ImageUpload";
 import {
   TrustBadge,
   CredibilityBreakdown,
-  defaultCredibilityFactors,
+  ImprovementSuggestions,
   VisualIntegrityBadge,
   generateMockVisualResult,
+  useRealTimeCredibilityScore,
 } from "./ai-trust";
+import { CampaignMetadata, ZKProof } from "@/types/aiTrust";
 
 const CampaignForm = () => {
   const navigate = useNavigate();
@@ -58,6 +60,36 @@ const CampaignForm = () => {
     galleryImages: [],
     videoUrl: "",
   });
+
+  // Create campaign metadata for credibility scoring
+  const campaignMetadata: CampaignMetadata | undefined =
+    address && formData.title
+      ? {
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          location: formData.location,
+          creatorAddress: address,
+          creationDate: new Date(),
+          zkProofs: [] as ZKProof[], // Would be populated with actual ZK proofs
+          publicVerifications: [],
+        }
+      : undefined;
+
+  // Use real-time credibility scoring
+  const {
+    score: credibilityScore,
+    breakdown: scoreBreakdown,
+    suggestions: improvementSuggestions,
+    trustLevel,
+    isLoading: isScoreLoading,
+    error: scoreError,
+  } = useRealTimeCredibilityScore(campaignMetadata!, [
+    formData.title,
+    formData.description,
+    formData.category,
+    formData.location,
+  ]);
 
   const steps = [
     { number: 1, title: "Basics", icon: Target },
@@ -533,7 +565,16 @@ const CampaignForm = () => {
                 <h3 className="text-xl font-bold text-white">
                   Campaign Preview
                 </h3>
-                <TrustBadge score={72} level="medium" size="sm" />
+                {credibilityScore && (
+                  <TrustBadge
+                    score={credibilityScore.score}
+                    level={trustLevel}
+                    size="sm"
+                    isLoading={isScoreLoading}
+                    confidence={credibilityScore.confidence}
+                    showDetails={true}
+                  />
+                )}
               </div>
               <div className="space-y-4">
                 <div>
@@ -568,10 +609,23 @@ const CampaignForm = () => {
 
             {/* AI Trust Analysis Preview */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <CredibilityBreakdown
-                overallScore={72}
-                factors={defaultCredibilityFactors.slice(0, 3)}
-              />
+              {scoreBreakdown && (
+                <CredibilityBreakdown
+                  breakdown={scoreBreakdown}
+                  isOwner={true}
+                />
+              )}
+              {improvementSuggestions.length > 0 && (
+                <ImprovementSuggestions
+                  suggestions={improvementSuggestions}
+                  currentScore={credibilityScore?.score || 0}
+                  onActionClick={(suggestion) => {
+                    // Handle improvement action clicks
+                    console.log("Improvement action clicked:", suggestion);
+                    // Could navigate to verification flows, etc.
+                  }}
+                />
+              )}
               {formData.heroImage && (
                 <div className="space-y-4">
                   <h4 className="text-lg font-semibold text-white">
