@@ -24,10 +24,17 @@ import {
   CredibilityBreakdown,
   ImprovementSuggestions,
   VisualIntegrityBadge,
+  DuplicationWarning,
   generateMockVisualResult,
   useRealTimeCredibilityScore,
 } from "./ai-trust";
-import { CampaignMetadata, ZKProof } from "@/types/aiTrust";
+import {
+  CampaignMetadata,
+  ZKProof,
+  CampaignContent,
+  DuplicationResult,
+} from "@/types/aiTrust";
+import { narrativeEngine } from "@/services/narrativeEngine";
 
 const CampaignForm = () => {
   const navigate = useNavigate();
@@ -47,6 +54,11 @@ const CampaignForm = () => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+  const [duplicationResult, setDuplicationResult] =
+    useState<DuplicationResult | null>(null);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [showDuplicationWarning, setShowDuplicationWarning] = useState(false);
+  const [duplicateCheckPassed, setDuplicateCheckPassed] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     tagline: "",
@@ -152,6 +164,48 @@ const CampaignForm = () => {
     setShowEeRC20Flow(false);
   };
 
+  const checkForDuplicates = async (): Promise<boolean> => {
+    if (!formData.title || !formData.description) {
+      return true; // Skip check if required fields are missing
+    }
+
+    setIsCheckingDuplicates(true);
+    try {
+      const campaignContent: CampaignContent = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        language: "English", // Could be detected automatically
+      };
+
+      const result = await narrativeEngine.checkForDuplicates(campaignContent);
+      setDuplicationResult(result);
+
+      if (result.isDuplicate && result.confidence > 0.7) {
+        setShowDuplicationWarning(true);
+        return false; // Block deployment
+      }
+
+      setDuplicateCheckPassed(true);
+      return true; // Allow deployment
+    } catch (error) {
+      console.error("Duplicate check failed:", error);
+      toast({
+        title: "Duplicate Check Failed",
+        description: "Unable to check for duplicates. Proceeding with caution.",
+        variant: "destructive",
+      });
+      return true; // Allow deployment on error
+    } finally {
+      setIsCheckingDuplicates(false);
+    }
+  };
+
+  const handleDuplicationWarningDismiss = () => {
+    setShowDuplicationWarning(false);
+    setDuplicateCheckPassed(true); // Allow user to proceed after reviewing warning
+  };
+
   const handleDeploy = async () => {
     // Check wallet connection
     if (!isConnected) {
@@ -173,6 +227,14 @@ const CampaignForm = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Check for duplicates if not already done
+    if (!duplicateCheckPassed) {
+      const canProceed = await checkForDuplicates();
+      if (!canProceed) {
+        return; // Stop deployment if duplicates found
+      }
     }
 
     setIsDeploying(true);
@@ -675,6 +737,35 @@ const CampaignForm = () => {
                 </div>
               )}
 
+              {/* Duplicate Check Status */}
+              {isCheckingDuplicates && (
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-center text-orange-400 text-sm">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Checking for duplicate campaigns...
+                  </div>
+                </div>
+              )}
+
+              {duplicationResult && !duplicateCheckPassed && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-center text-red-400 text-sm">
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Potential duplicate detected - please review before
+                    deploying
+                  </div>
+                </div>
+              )}
+
+              {duplicateCheckPassed && (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-center text-green-400 text-sm">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Duplicate check passed - ready to deploy
+                  </div>
+                </div>
+              )}
+
               {campaignError && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4">
                   <div className="flex items-center justify-center text-red-400 text-sm">
@@ -692,10 +783,20 @@ const CampaignForm = () => {
 
               <button
                 onClick={handleDeploy}
-                disabled={isDeploying || isCampaignLoading || !keyLoaded}
+                disabled={
+                  isDeploying ||
+                  isCampaignLoading ||
+                  !keyLoaded ||
+                  isCheckingDuplicates
+                }
                 className="btn-primary px-8 py-4 font-semibold text-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
               >
-                {isDeploying || isCampaignLoading ? (
+                {isCheckingDuplicates ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Checking for Duplicates...
+                  </>
+                ) : isDeploying || isCampaignLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />
                     {!isConnected
@@ -833,6 +934,36 @@ const CampaignForm = () => {
         onComplete={handleEeRC20Complete}
         onClose={() => setShowEeRC20Flow(false)}
       />
+
+      {/* Duplication Warning */}
+      {showDuplicationWarning && duplicationResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-4xl w-full">
+            <DuplicationWarning
+              similarCampaigns={duplicationResult.matches.map((match) => ({
+                id: match.campaignId,
+                title: `Campaign ${match.campaignId}`,
+                creator: "0x1234...5678", // Mock data
+                similarity: Math.round(match.similarity * 100),
+                matchedSegments: match.matchedSegments.map(
+                  (segment) => segment.text,
+                ),
+                status: "active" as const,
+              }))}
+              confidence={Math.round(duplicationResult.confidence * 100)}
+              onDismiss={handleDuplicationWarningDismiss}
+              onReport={(campaignId) => {
+                console.log("Report campaign:", campaignId);
+                // Could open a report modal here
+              }}
+              onViewDetails={(campaignId) => {
+                console.log("View campaign details:", campaignId);
+                // Could navigate to campaign details
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
