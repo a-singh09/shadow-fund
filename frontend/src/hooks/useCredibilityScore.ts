@@ -72,7 +72,7 @@ export const useCredibilityScore = (
         setIsLoading(false);
       }
     },
-    [],
+    [], // Empty dependency array is correct here
   );
 
   // Get score breakdown for a campaign
@@ -112,7 +112,7 @@ export const useCredibilityScore = (
     } else if (metadata) {
       await calculateScore(metadata);
     }
-  }, [campaignId, metadata, getBreakdown, calculateScore]);
+  }, [campaignId, getBreakdown, calculateScore]); // Remove metadata from deps to prevent infinite loops
 
   // Initial load
   useEffect(() => {
@@ -121,7 +121,7 @@ export const useCredibilityScore = (
     } else if (metadata) {
       calculateScore(metadata);
     }
-  }, [campaignId, metadata, getBreakdown, calculateScore]);
+  }, [campaignId, getBreakdown, calculateScore]); // Remove metadata from deps
 
   // Auto-refresh functionality
   useEffect(() => {
@@ -134,14 +134,14 @@ export const useCredibilityScore = (
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, refresh, campaignId, metadata]);
+  }, [autoRefresh, refreshInterval, refresh, campaignId]); // Remove metadata from deps
 
   // Update suggestions when score changes
   useEffect(() => {
-    if (score && !suggestions.length) {
+    if (score && suggestions.length === 0) {
       getSuggestions(score.score);
     }
-  }, [score, suggestions.length, getSuggestions]);
+  }, [score?.score, suggestions.length, getSuggestions]); // Use score.score instead of score object
 
   return {
     score,
@@ -177,7 +177,8 @@ export const useRealTimeCredibilityScore = (
     if (metadata) {
       credibilityHook.calculateScore(metadata);
     }
-  }, dependencies); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, dependencies);
 
   return credibilityHook;
 };

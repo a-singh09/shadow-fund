@@ -8,7 +8,7 @@ import {
   Clock,
   Zap,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import TrustBadge from "./TrustBadge";
 import CredibilityBreakdown from "./CredibilityBreakdown";
 import DuplicationWarning from "./DuplicationWarning";
@@ -39,31 +39,34 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
     useState<TrustAnalysisResult | null>(null);
   const [lastAnalysisTime, setLastAnalysisTime] = useState<Date | null>(null);
 
-  // Generate mock campaign metadata for the credibility hook
-  const mockCampaignMetadata: CampaignMetadata = {
-    title: `Campaign ${campaignId}`,
-    description: "Sample campaign description for AI trust analysis",
-    category: "Technology",
-    location: "Global",
-    creatorAddress: "0x1234567890123456789012345678901234567890",
-    creationDate: new Date(),
-    zkProofs: [
-      {
-        type: "GOVERNMENT_ID",
-        verified: true,
-        timestamp: new Date(),
-        proofHash: "0xabcdef123456789",
-      },
-    ],
-    publicVerifications: [
-      {
-        type: "EMAIL",
-        status: "VERIFIED",
-        timestamp: new Date(),
-        source: "System",
-      },
-    ],
-  };
+  // Generate mock campaign metadata for the credibility hook (memoized to prevent infinite loops)
+  const mockCampaignMetadata: CampaignMetadata = useMemo(
+    () => ({
+      title: `Campaign ${campaignId}`,
+      description: "Sample campaign description for AI trust analysis",
+      category: "Technology",
+      location: "Global",
+      creatorAddress: "0x1234567890123456789012345678901234567890",
+      creationDate: new Date("2024-01-01"), // Fixed date to prevent changes
+      zkProofs: [
+        {
+          type: "GOVERNMENT_ID",
+          verified: true,
+          timestamp: new Date("2024-01-01"),
+          proofHash: "0xabcdef123456789",
+        },
+      ],
+      publicVerifications: [
+        {
+          type: "EMAIL",
+          status: "VERIFIED",
+          timestamp: new Date("2024-01-01"),
+          source: "System",
+        },
+      ],
+    }),
+    [campaignId],
+  );
 
   // Use the credibility score hook
   const {
@@ -109,12 +112,7 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
   const visualResult = generateMockVisualResult("verified");
   const fundFlowData = generateMockFundFlowData();
 
-  // Load trust analysis on component mount
-  useEffect(() => {
-    loadTrustAnalysis();
-  }, [campaignId]);
-
-  const loadTrustAnalysis = async () => {
+  const loadTrustAnalysis = useCallback(async () => {
     try {
       setIsAnalyzing(true);
 
@@ -132,14 +130,54 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
 
       // Run comprehensive trust analysis
       const analysis = await aiTrustService.analyzeCampaign(campaignData);
-      setTrustAnalysis(analysis);
+
+      // Ensure analysis has proper structure with defaults
+      const safeAnalysis = {
+        ...analysis,
+        duplicationCheck: {
+          isDuplicate: analysis?.duplicationCheck?.isDuplicate || false,
+          confidence: analysis?.duplicationCheck?.confidence || 0,
+          matches: (analysis?.duplicationCheck?.matches || []).map((match) => ({
+            campaignId: match?.campaignId || "unknown",
+            similarity: match?.similarity || 0,
+            matchedSegments: (match?.matchedSegments || []).map((seg) => ({
+              text: seg?.text || "No text",
+              ...seg,
+            })),
+            ...match,
+          })),
+        },
+        visualVerification: {
+          hasIssues: analysis?.visualVerification?.hasIssues || false,
+          ...analysis?.visualVerification,
+        },
+        ...analysis,
+      };
+
+      setTrustAnalysis(safeAnalysis);
       setLastAnalysisTime(new Date());
     } catch (error) {
       console.error("Failed to load trust analysis:", error);
+      // Set a default analysis structure to prevent crashes
+      setTrustAnalysis({
+        duplicationCheck: {
+          isDuplicate: false,
+          confidence: 0,
+          matches: [],
+        },
+        visualVerification: {
+          hasIssues: false,
+        },
+      } as any);
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [campaignId, mockCampaignMetadata]);
+
+  // Load trust analysis on component mount
+  useEffect(() => {
+    loadTrustAnalysis();
+  }, [loadTrustAnalysis]);
 
   const runAIAnalysis = async () => {
     await loadTrustAnalysis();
@@ -212,7 +250,7 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
               <span className="text-xs text-gray-400">Content Check</span>
             </div>
             <div className="text-lg font-bold text-yellow-400">
-              {trustAnalysis?.duplicationCheck.isDuplicate
+              {trustAnalysis?.duplicationCheck?.isDuplicate
                 ? "Duplicate Risk"
                 : "Clean"}
             </div>
@@ -223,7 +261,7 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
               <span className="text-xs text-gray-400">Visual Integrity</span>
             </div>
             <div className="text-lg font-bold text-green-400">
-              {trustAnalysis?.visualVerification.hasIssues
+              {trustAnalysis?.visualVerification?.hasIssues
                 ? "Issues Found"
                 : "Verified"}
             </div>
@@ -275,12 +313,12 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
                 <DuplicationWarning
                   similarCampaigns={trustAnalysis.duplicationCheck.matches.map(
                     (match) => ({
-                      id: match.campaignId,
-                      title: `Similar Campaign ${match.campaignId.slice(0, 8)}`,
+                      id: match.campaignId || "unknown",
+                      title: `Similar Campaign ${(match.campaignId || "unknown").slice(0, 8)}`,
                       creator: "Unknown Creator",
-                      similarity: Math.round(match.similarity * 100),
-                      matchedSegments: match.matchedSegments.map(
-                        (seg) => seg.text,
+                      similarity: Math.round((match.similarity || 0) * 100),
+                      matchedSegments: (match.matchedSegments || []).map(
+                        (seg) => seg?.text || "No text",
                       ),
                       status: "active" as const,
                     }),
@@ -306,16 +344,18 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
           <DuplicationWarning
             similarCampaigns={trustAnalysis.duplicationCheck.matches.map(
               (match) => ({
-                id: match.campaignId,
-                title: `Similar Campaign ${match.campaignId.slice(0, 8)}`,
+                id: match.campaignId || "unknown",
+                title: `Similar Campaign ${(match.campaignId || "unknown").slice(0, 8)}`,
                 creator: "Unknown Creator",
-                similarity: Math.round(match.similarity * 100),
-                matchedSegments: match.matchedSegments.map((seg) => seg.text),
+                similarity: Math.round((match.similarity || 0) * 100),
+                matchedSegments: (match.matchedSegments || []).map(
+                  (seg) => seg?.text || "No text",
+                ),
                 status: "active" as const,
               }),
             )}
             confidence={Math.round(
-              trustAnalysis.duplicationCheck.confidence * 100,
+              (trustAnalysis.duplicationCheck?.confidence || 0) * 100,
             )}
             onDismiss={() => console.log("Dismissed")}
             onReport={(id) => console.log("Reported:", id)}

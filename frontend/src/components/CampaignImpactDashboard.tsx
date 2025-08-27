@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { FundFlowDiagram } from "./FundFlowDiagram";
 import { InteractiveImpactVisualization } from "./InteractiveImpactVisualization";
@@ -56,22 +56,71 @@ export const CampaignImpactDashboard: React.FC<
     "flow",
   );
 
-  // Initialize services
-  const geminiClient = new GeminiClient();
-  const errorHandler = new AITrustErrorHandler();
-  const fundFlowVisualizer = new FundFlowVisualizer(geminiClient, errorHandler);
-  const impactReportingService = new ImpactReportingService(
-    geminiClient,
-    errorHandler,
+  // Initialize services (memoized to prevent recreation on every render)
+  const services = useMemo(() => {
+    const geminiClient = new GeminiClient();
+    const errorHandler = new AITrustErrorHandler();
+    const fundFlowVisualizer = new FundFlowVisualizer(
+      geminiClient,
+      errorHandler,
+    );
+    const impactReportingService = new ImpactReportingService(
+      geminiClient,
+      errorHandler,
+    );
+    return { fundFlowVisualizer, impactReportingService };
+  }, []);
+
+  const generateMockImpactReports = useCallback(
+    async (campaignId: string): Promise<ImpactReport[]> => {
+      // Generate realistic mock data for demonstration
+      const categories: ImpactCategory[] = [
+        "EDUCATION",
+        "HEALTHCARE",
+        "ENVIRONMENT",
+        "POVERTY",
+      ];
+      const locations = ["Kenya", "Bangladesh", "Guatemala", "Philippines"];
+      const organizations = [
+        "0x1234567890123456789012345678901234567890",
+        "0x2345678901234567890123456789012345678901",
+        "0x3456789012345678901234567890123456789012",
+      ];
+
+      const reports: ImpactReport[] = [];
+
+      for (let i = 0; i < 8; i++) {
+        const category = categories[i % categories.length];
+        const location = locations[i % locations.length];
+        const organization = organizations[i % organizations.length];
+
+        const report = await services.impactReportingService.createImpactReport(
+          organization,
+          campaignId,
+          generateImpactClaim(category, location),
+          category,
+          [`evidence_${i + 1}.jpg`, `report_${i + 1}.pdf`],
+          location,
+          Math.floor(Math.random() * 500) + 50,
+        );
+
+        // Simulate verification results
+        report.verificationStatus =
+          i % 3 === 0
+            ? "AI_VERIFIED"
+            : i % 3 === 1
+              ? "SELF_DECLARED"
+              : "PENDING";
+
+        reports.push(report);
+      }
+
+      return reports;
+    },
+    [services.impactReportingService],
   );
 
-  useEffect(() => {
-    if (showImpact && !flowDiagram) {
-      loadImpactData();
-    }
-  }, [showImpact, campaignId]);
-
-  const loadImpactData = async () => {
+  const loadImpactData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -81,7 +130,7 @@ export const CampaignImpactDashboard: React.FC<
       setImpactReports(mockReports);
 
       // Generate flow diagram
-      const diagram = await fundFlowVisualizer.generateFlowDiagram(
+      const diagram = await services.fundFlowVisualizer.generateFlowDiagram(
         campaignId,
         mockReports,
       );
@@ -92,7 +141,9 @@ export const CampaignImpactDashboard: React.FC<
 
       // Generate impact visualization
       const visualization =
-        await fundFlowVisualizer.createImpactVisualization(aggregatedImpact);
+        await services.fundFlowVisualizer.createImpactVisualization(
+          aggregatedImpact,
+        );
       setImpactVisualization(visualization);
     } catch (err) {
       console.error("Failed to load impact data:", err);
@@ -100,51 +151,13 @@ export const CampaignImpactDashboard: React.FC<
     } finally {
       setLoading(false);
     }
-  };
+  }, [campaignId, services, generateMockImpactReports]);
 
-  const generateMockImpactReports = async (
-    campaignId: string,
-  ): Promise<ImpactReport[]> => {
-    // Generate realistic mock data for demonstration
-    const categories: ImpactCategory[] = [
-      "EDUCATION",
-      "HEALTHCARE",
-      "ENVIRONMENT",
-      "POVERTY",
-    ];
-    const locations = ["Kenya", "Bangladesh", "Guatemala", "Philippines"];
-    const organizations = [
-      "0x1234567890123456789012345678901234567890",
-      "0x2345678901234567890123456789012345678901",
-      "0x3456789012345678901234567890123456789012",
-    ];
-
-    const reports: ImpactReport[] = [];
-
-    for (let i = 0; i < 8; i++) {
-      const category = categories[i % categories.length];
-      const location = locations[i % locations.length];
-      const organization = organizations[i % organizations.length];
-
-      const report = await impactReportingService.createImpactReport(
-        organization,
-        campaignId,
-        generateImpactClaim(category, location),
-        category,
-        [`evidence_${i + 1}.jpg`, `report_${i + 1}.pdf`],
-        location,
-        Math.floor(Math.random() * 500) + 50,
-      );
-
-      // Simulate verification results
-      report.verificationStatus =
-        i % 3 === 0 ? "AI_VERIFIED" : i % 3 === 1 ? "SELF_DECLARED" : "PENDING";
-
-      reports.push(report);
+  useEffect(() => {
+    if (showImpact && !flowDiagram) {
+      loadImpactData();
     }
-
-    return reports;
-  };
+  }, [showImpact, flowDiagram, loadImpactData]);
 
   const generateImpactClaim = (
     category: ImpactCategory,
@@ -278,17 +291,17 @@ export const CampaignImpactDashboard: React.FC<
     };
   };
 
-  const handleNodeClick = (nodeId: string) => {
+  const handleNodeClick = useCallback((nodeId: string) => {
     console.log("Node clicked:", nodeId);
     // Could implement drill-down functionality here
-  };
+  }, []);
 
-  const handleElementClick = (elementId: string, data: any) => {
+  const handleElementClick = useCallback((elementId: string, data: any) => {
     console.log("Element clicked:", elementId, data);
     // Could implement detailed view functionality here
-  };
+  }, []);
 
-  const getVerificationSummary = () => {
+  const getVerificationSummary = useMemo(() => {
     if (!impactReports.length) return null;
 
     const summary = impactReports.reduce(
@@ -301,7 +314,7 @@ export const CampaignImpactDashboard: React.FC<
     );
 
     return summary;
-  };
+  }, [impactReports]);
 
   const getVerificationColor = (level: VerificationStatus): string => {
     const colors = {
@@ -406,7 +419,7 @@ export const CampaignImpactDashboard: React.FC<
     );
   }
 
-  const verificationSummary = getVerificationSummary();
+  const verificationSummary = getVerificationSummary;
 
   return (
     <div className={`space-y-8 ${className}`}>
