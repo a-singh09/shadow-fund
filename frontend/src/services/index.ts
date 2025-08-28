@@ -8,6 +8,11 @@ export {
 } from "./aiTrustErrorHandler";
 export { trustDataStorage, TrustDataStorage } from "./trustDataStorage";
 
+// Impact and Fund Flow Services
+export { ImpactReportingService } from "./impactReportingService";
+export { ImpactVerificationEngine } from "./impactVerificationEngine";
+export { FundFlowVisualizer } from "./fundFlowVisualizer";
+
 // Re-export types for convenience
 export type {
   AITrustError,
@@ -29,4 +34,14 @@ export type {
   RequestMetrics,
   ErrorResolution,
   FallbackResult,
+  // Impact and Fund Flow Types
+  ImpactReport,
+  ZKAttestation,
+  AIVerificationResult,
+  FlowDiagram,
+  ImpactVisualization,
+  AggregatedImpact,
+  OrganizationDashboard,
+  ImpactCategory,
+  VerificationStatus,
 } from "../types/aiTrust";

@@ -328,3 +328,248 @@ export interface StorageStats {
   visualCache: number;
   totalSize: number;
 }
+
+// Impact Reporting System Types
+export interface ImpactReport {
+  reportId: string;
+  organizationWallet: string;
+  campaignId: string;
+  claim: string; // e.g., "Delivered 100 meals"
+  timestamp: Date;
+  onChainSignature: string;
+  supportingEvidence?: string[];
+  category: ImpactCategory;
+  location?: string;
+  beneficiaryCount?: number;
+  verificationStatus: VerificationStatus;
+  aiVerificationResult?: AIVerificationResult;
+}
+
+export interface ZKAttestation {
+  attestationId: string;
+  type: "RECEIVED_FUNDS" | "SPENT_FUNDS" | "DELIVERED_IMPACT";
+  metadata: AttestationMetadata; // Only non-sensitive data
+  proofHash: string; // Simulated ZK proof
+  timestamp: Date;
+  verifierSignature: string;
+  campaignId: string;
+}
+
+export interface AttestationMetadata {
+  cause: string;
+  location: string;
+  timeframe: string;
+  impactType: string;
+  // No amounts or sensitive data
+}
+
+export interface AIVerificationResult {
+  isVerified: boolean;
+  confidence: number;
+  crossReferences: CrossReference[];
+  inconsistencies: Inconsistency[];
+  aiSummary: string;
+  verificationSources: VerificationSource[];
+  historicalConsistency: number; // 0-1
+}
+
+export interface CrossReference {
+  source: string;
+  url?: string;
+  relevance: number;
+  supportsClaim: boolean;
+  extractedInfo: string;
+}
+
+export interface Inconsistency {
+  type: "TIMELINE" | "LOCATION" | "SCALE" | "DUPLICATE" | "CONTRADICTION";
+  severity: "HIGH" | "MEDIUM" | "LOW";
+  description: string;
+  conflictingSource?: string;
+}
+
+export interface VerificationSource {
+  type:
+    | "NEWS"
+    | "GOVERNMENT_API"
+    | "SOCIAL_MEDIA"
+    | "NGO_DATABASE"
+    | "BLOCKCHAIN";
+  name: string;
+  url?: string;
+  reliability: number; // 0-1
+  lastChecked: Date;
+}
+
+export interface AttestationSummary {
+  totalAttestations: number;
+  verifiedAttestations: number;
+  categories: Record<ImpactCategory, number>;
+  timeRange: {
+    earliest: Date;
+    latest: Date;
+  };
+  aggregatedImpact: AggregatedImpact;
+}
+
+export interface AggregatedImpact {
+  totalBeneficiaries: number;
+  impactsByCategory: Record<ImpactCategory, CategoryImpact>;
+  geographicDistribution: LocationImpact[];
+  timelineData: TimelinePoint[];
+}
+
+export interface CategoryImpact {
+  category: ImpactCategory;
+  totalReports: number;
+  verifiedReports: number;
+  estimatedBeneficiaries: number;
+  keyMetrics: ImpactMetric[];
+}
+
+export interface LocationImpact {
+  location: string;
+  coordinates?: { lat: number; lng: number };
+  impactCount: number;
+  categories: ImpactCategory[];
+  verificationLevel: number; // 0-1
+}
+
+export interface TimelinePoint {
+  date: Date;
+  impactCount: number;
+  categories: ImpactCategory[];
+  cumulativeImpact: number;
+}
+
+export interface ImpactMetric {
+  name: string;
+  value: number;
+  unit: string;
+  category: ImpactCategory;
+  verificationLevel: VerificationStatus;
+}
+
+export type ImpactCategory =
+  | "EDUCATION"
+  | "HEALTHCARE"
+  | "ENVIRONMENT"
+  | "POVERTY"
+  | "DISASTER_RELIEF"
+  | "HUMAN_RIGHTS"
+  | "COMMUNITY_DEVELOPMENT"
+  | "OTHER";
+
+export type VerificationStatus =
+  | "AI_VERIFIED"
+  | "SELF_DECLARED"
+  | "UNVERIFIED"
+  | "FLAGGED"
+  | "PENDING";
+
+// Fund Flow Visualization Types
+export interface FlowDiagram {
+  type: "SANKEY" | "FLOWCHART" | "TREE" | "MAP" | "HEATMAP";
+  data: DiagramData;
+  interactiveElements: InteractiveElement[];
+  privacyLevel: "AGGREGATED" | "ANONYMIZED" | "PUBLIC";
+  verificationLevel: VerificationStatus;
+}
+
+export interface DiagramData {
+  nodes: FlowNode[];
+  links: FlowLink[];
+  metadata: FlowMetadata;
+}
+
+export interface FlowNode {
+  id: string;
+  name: string;
+  type: "DONOR" | "CAMPAIGN" | "ORGANIZATION" | "BENEFICIARY" | "IMPACT";
+  value: number; // Aggregated, not individual amounts
+  category?: ImpactCategory;
+  verificationLevel: VerificationStatus;
+  metadata?: Record<string, any>;
+}
+
+export interface FlowLink {
+  source: string;
+  target: string;
+  value: number; // Aggregated flow amount
+  category?: ImpactCategory;
+  verificationLevel: VerificationStatus;
+  timestamp?: Date;
+}
+
+export interface FlowMetadata {
+  totalFlow: number;
+  timeRange: { start: Date; end: Date };
+  participantCount: number;
+  verificationSummary: Record<VerificationStatus, number>;
+}
+
+export interface InteractiveElement {
+  id: string;
+  type: "TOOLTIP" | "DRILL_DOWN" | "FILTER" | "HIGHLIGHT";
+  targetNodeId?: string;
+  targetLinkId?: string;
+  action: string;
+  data: any;
+}
+
+export interface ImpactVisualization {
+  totalImpact: string; // AI-generated summary
+  keyMetrics: ImpactMetric[];
+  visualElements: VisualizationElement[];
+  confidenceScore: number;
+  verificationSources: VerificationSource[];
+  privacyLevel: "AGGREGATED" | "ANONYMIZED" | "PUBLIC";
+}
+
+export interface VisualizationElement {
+  type: "CHART" | "MAP" | "TIMELINE" | "METRIC_CARD" | "PROGRESS_BAR";
+  id: string;
+  title: string;
+  data: any;
+  config: VisualizationConfig;
+}
+
+export interface VisualizationConfig {
+  colors?: string[];
+  dimensions?: { width: number; height: number };
+  interactive?: boolean;
+  showLegend?: boolean;
+  showTooltips?: boolean;
+  customOptions?: Record<string, any>;
+}
+
+// Organization Dashboard Types
+export interface OrganizationDashboard {
+  organizationId: string;
+  organizationName: string;
+  walletAddress: string;
+  campaigns: CampaignSummary[];
+  impactReports: ImpactReport[];
+  attestations: ZKAttestation[];
+  verificationStatus: OrganizationVerificationStatus;
+  credibilityScore: number;
+  totalImpactClaimed: AggregatedImpact;
+}
+
+export interface CampaignSummary {
+  campaignId: string;
+  title: string;
+  category: ImpactCategory;
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+  totalRaised: number; // Can be shown as it's public
+  impactReports: number;
+  verificationLevel: VerificationStatus;
+}
+
+export interface OrganizationVerificationStatus {
+  isVerified: boolean;
+  verificationLevel: "BASIC" | "ENHANCED" | "PREMIUM";
+  verifiedFields: string[];
+  pendingVerifications: string[];
+  lastVerificationUpdate: Date;
+}

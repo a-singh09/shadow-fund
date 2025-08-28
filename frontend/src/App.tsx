@@ -10,6 +10,7 @@ import CreateCampaign from "./pages/CreateCampaign";
 import Dashboard from "./pages/Dashboard";
 import DashboardWithdraw from "./pages/DashboardWithdraw";
 import DashboardAnalyticsPage from "./pages/DashboardAnalyticsPage";
+import AITrustDemo from "./pages/AITrustDemo";
 
 import NotFound from "./pages/NotFound";
 
@@ -30,6 +31,7 @@ const App = () => (
             path="/dashboard/analytics"
             element={<DashboardAnalyticsPage />}
           />
+          <Route path="/ai-trust-demo" element={<AITrustDemo />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

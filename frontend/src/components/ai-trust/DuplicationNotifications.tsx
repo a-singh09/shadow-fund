@@ -9,7 +9,7 @@ import {
   X,
   Clock,
   Filter,
-  MarkAsRead,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -192,7 +192,7 @@ const DuplicationNotifications: React.FC<DuplicationNotificationsProps> = ({
                   onClick={handleMarkAllAsRead}
                   className="text-xs text-gray-400 hover:text-white"
                 >
-                  <MarkAsRead className="w-3 h-3 mr-1" />
+                  <Check className="w-3 h-3 mr-1" />
                   Mark all read
                 </Button>
               )}

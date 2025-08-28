@@ -37,7 +37,7 @@ const Navigation = () => {
       icon: LayoutDashboard,
       authRequired: true,
     },
-
+    { text: "AI Trust Demo", route: "/ai-trust-demo", icon: Brain },
     { text: "How It Works", route: "/#how-it-works", icon: HelpCircle },
   ];
 

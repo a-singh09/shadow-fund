@@ -36,3 +36,9 @@ export { default as AvalancheSection } from "./AvalancheSection";
 export { default as CTASection } from "./CTASection";
 export { default as Footer } from "./Footer";
 export { default as MouseFollower } from "./MouseFollower";
+
+// Fund Flow and Impact Visualization Components
+export { FundFlowDiagram } from "./FundFlowDiagram";
+export { InteractiveImpactVisualization } from "./InteractiveImpactVisualization";
+export { CampaignImpactDashboard } from "./CampaignImpactDashboard";
+export { OrganizationImpactDashboard } from "./OrganizationImpactDashboard";

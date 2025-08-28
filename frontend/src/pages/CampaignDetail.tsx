@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AITrustDashboard } from "@/components/ai-trust";
+import { CampaignImpactDashboard } from "@/components/CampaignImpactDashboard";
 
 const CampaignDetail = () => {
   const { id } = useParams();
@@ -423,6 +424,12 @@ We believe that meaningful connections shouldn't come at the cost of your privac
 
                 {/* AI Trust Dashboard */}
                 <AITrustDashboard campaignId={id || "demo"} />
+
+                {/* Campaign Impact Dashboard */}
+                <CampaignImpactDashboard
+                  campaignId={id || "demo"}
+                  campaignTitle={campaign.title}
+                />
 
                 {/* Campaign Updates */}
                 <div className="glass rounded-2xl p-8 border border-red-500/20">

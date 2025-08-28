@@ -245,4 +245,39 @@ export const getTrustLevel = (
   return "FLAGGED";
 };
 
+// Default credibility factors for demo purposes
+export const defaultCredibilityFactors: ScoreFactor[] = [
+  {
+    type: "GOVERNMENT_ID",
+    weight: 0.25,
+    value: 85,
+    description:
+      "Government-issued ID verification completed with high confidence",
+  },
+  {
+    type: "NGO_LICENSE",
+    weight: 0.2,
+    value: 0,
+    description: "NGO license verification not yet completed",
+  },
+  {
+    type: "ACCOUNT_AGE",
+    weight: 0.15,
+    value: 65,
+    description: "Account created 8 months ago, showing moderate history",
+  },
+  {
+    type: "SOCIAL_MEDIA",
+    weight: 0.2,
+    value: 72,
+    description: "Active social media presence with verified accounts",
+  },
+  {
+    type: "HISTORY",
+    weight: 0.2,
+    value: 90,
+    description: "Excellent track record with 3 successful campaigns",
+  },
+];
+
 export default CredibilityBreakdown;

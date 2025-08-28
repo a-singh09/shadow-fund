@@ -8,16 +8,22 @@ import {
   Clock,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TrustBadge from "./TrustBadge";
-import CredibilityBreakdown, {
-  defaultCredibilityFactors,
-} from "./CredibilityBreakdown";
+import CredibilityBreakdown from "./CredibilityBreakdown";
 import DuplicationWarning from "./DuplicationWarning";
 import VisualIntegrityBadge, {
   generateMockVisualResult,
 } from "./VisualIntegrityBadge";
 import FundFlowDiagram, { generateMockFundFlowData } from "./FundFlowDiagram";
+import { useCredibilityScore } from "../../hooks/useCredibilityScore";
+import { aiTrustService } from "../../services/aiTrustService";
+import {
+  TrustAnalysisResult,
+  CampaignData,
+  CampaignMetadata,
+  TrustLevel,
+} from "../../types/aiTrust";
 
 interface AITrustDashboardProps {
   campaignId: string;
@@ -29,11 +35,51 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
     "overview" | "credibility" | "content" | "visual" | "impact"
   >("overview");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [trustAnalysis, setTrustAnalysis] =
+    useState<TrustAnalysisResult | null>(null);
+  const [lastAnalysisTime, setLastAnalysisTime] = useState<Date | null>(null);
 
-  // Mock data for demo
-  const trustScore = 78;
-  const trustLevel =
-    trustScore >= 80 ? "high" : trustScore >= 60 ? "medium" : "low";
+  // Generate mock campaign metadata for the credibility hook
+  const mockCampaignMetadata: CampaignMetadata = {
+    title: `Campaign ${campaignId}`,
+    description: "Sample campaign description for AI trust analysis",
+    category: "Technology",
+    location: "Global",
+    creatorAddress: "0x1234567890123456789012345678901234567890",
+    creationDate: new Date(),
+    zkProofs: [
+      {
+        type: "GOVERNMENT_ID",
+        verified: true,
+        timestamp: new Date(),
+        proofHash: "0xabcdef123456789",
+      },
+    ],
+    publicVerifications: [
+      {
+        type: "EMAIL",
+        status: "VERIFIED",
+        timestamp: new Date(),
+        source: "System",
+      },
+    ],
+  };
+
+  // Use the credibility score hook
+  const {
+    score: credibilityScore,
+    breakdown,
+    suggestions,
+    trustLevel,
+    isLoading: credibilityLoading,
+    error: credibilityError,
+    refresh: refreshCredibility,
+  } = useCredibilityScore({
+    campaignId,
+    metadata: mockCampaignMetadata,
+  });
+
+  const trustScore = credibilityScore?.score || 0;
 
   const mockSimilarCampaigns = [
     {
@@ -63,11 +109,41 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
   const visualResult = generateMockVisualResult("verified");
   const fundFlowData = generateMockFundFlowData();
 
+  // Load trust analysis on component mount
+  useEffect(() => {
+    loadTrustAnalysis();
+  }, [campaignId]);
+
+  const loadTrustAnalysis = async () => {
+    try {
+      setIsAnalyzing(true);
+
+      // Create mock campaign data for analysis
+      const campaignData: CampaignData = {
+        metadata: mockCampaignMetadata,
+        content: {
+          title: mockCampaignMetadata.title,
+          description: mockCampaignMetadata.description,
+          category: mockCampaignMetadata.category,
+          language: "en",
+        },
+        mediaUrls: [], // No media URLs for now
+      };
+
+      // Run comprehensive trust analysis
+      const analysis = await aiTrustService.analyzeCampaign(campaignData);
+      setTrustAnalysis(analysis);
+      setLastAnalysisTime(new Date());
+    } catch (error) {
+      console.error("Failed to load trust analysis:", error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const runAIAnalysis = async () => {
-    setIsAnalyzing(true);
-    // Simulate AI analysis
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    setIsAnalyzing(false);
+    await loadTrustAnalysis();
+    await refreshCredibility();
   };
 
   const tabs = [
@@ -88,7 +164,12 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
             <h2 className="text-2xl font-bold text-white">AI Trust System</h2>
           </div>
           <div className="flex items-center gap-3">
-            <TrustBadge score={trustScore} level={trustLevel} />
+            <TrustBadge
+              score={trustScore}
+              level={trustLevel}
+              isLoading={credibilityLoading || isAnalyzing}
+              confidence={credibilityScore?.confidence}
+            />
             <button
               onClick={runAIAnalysis}
               disabled={isAnalyzing}
@@ -121,28 +202,42 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
               <Shield className="w-4 h-4 text-green-400" />
               <span className="text-xs text-gray-400">Trust Score</span>
             </div>
-            <div className="text-lg font-bold text-white">{trustScore}%</div>
+            <div className="text-lg font-bold text-white">
+              {credibilityLoading ? "..." : `${trustScore}%`}
+            </div>
           </div>
           <div className="glass-subtle rounded-lg p-3 border border-gray-700/50">
             <div className="flex items-center gap-2 mb-1">
               <Eye className="w-4 h-4 text-blue-400" />
               <span className="text-xs text-gray-400">Content Check</span>
             </div>
-            <div className="text-lg font-bold text-yellow-400">Medium Risk</div>
+            <div className="text-lg font-bold text-yellow-400">
+              {trustAnalysis?.duplicationCheck.isDuplicate
+                ? "Duplicate Risk"
+                : "Clean"}
+            </div>
           </div>
           <div className="glass-subtle rounded-lg p-3 border border-gray-700/50">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span className="text-xs text-gray-400">Visual Integrity</span>
             </div>
-            <div className="text-lg font-bold text-green-400">Verified</div>
+            <div className="text-lg font-bold text-green-400">
+              {trustAnalysis?.visualVerification.hasIssues
+                ? "Issues Found"
+                : "Verified"}
+            </div>
           </div>
           <div className="glass-subtle rounded-lg p-3 border border-gray-700/50">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="w-4 h-4 text-gray-400" />
               <span className="text-xs text-gray-400">Last Scan</span>
             </div>
-            <div className="text-sm font-bold text-white">2 hours ago</div>
+            <div className="text-sm font-bold text-white">
+              {lastAnalysisTime
+                ? `${Math.floor((Date.now() - lastAnalysisTime.getTime()) / (1000 * 60))} min ago`
+                : "Never"}
+            </div>
           </div>
         </div>
       </div>
@@ -172,34 +267,56 @@ const AITrustDashboard = ({ campaignId, className }: AITrustDashboardProps) => {
       <div className="space-y-6">
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CredibilityBreakdown
-              overallScore={trustScore}
-              factors={defaultCredibilityFactors}
-            />
+            {breakdown && (
+              <CredibilityBreakdown breakdown={breakdown} isOwner={false} />
+            )}
             <div className="space-y-6">
-              <DuplicationWarning
-                similarCampaigns={mockSimilarCampaigns}
-                confidence={78}
-                onDismiss={() => console.log("Dismissed")}
-                onReport={(id) => console.log("Reported:", id)}
-                onViewDetails={(id) => console.log("View details:", id)}
-              />
+              {trustAnalysis?.duplicationCheck && (
+                <DuplicationWarning
+                  similarCampaigns={trustAnalysis.duplicationCheck.matches.map(
+                    (match) => ({
+                      id: match.campaignId,
+                      title: `Similar Campaign ${match.campaignId.slice(0, 8)}`,
+                      creator: "Unknown Creator",
+                      similarity: Math.round(match.similarity * 100),
+                      matchedSegments: match.matchedSegments.map(
+                        (seg) => seg.text,
+                      ),
+                      status: "active" as const,
+                    }),
+                  )}
+                  confidence={Math.round(
+                    trustAnalysis.duplicationCheck.confidence * 100,
+                  )}
+                  onDismiss={() => console.log("Dismissed")}
+                  onReport={(id) => console.log("Reported:", id)}
+                  onViewDetails={(id) => console.log("View details:", id)}
+                />
+              )}
               <VisualIntegrityBadge result={visualResult} showDetails={true} />
             </div>
           </div>
         )}
 
-        {activeTab === "credibility" && (
-          <CredibilityBreakdown
-            overallScore={trustScore}
-            factors={defaultCredibilityFactors}
-          />
+        {activeTab === "credibility" && breakdown && (
+          <CredibilityBreakdown breakdown={breakdown} isOwner={false} />
         )}
 
-        {activeTab === "content" && (
+        {activeTab === "content" && trustAnalysis?.duplicationCheck && (
           <DuplicationWarning
-            similarCampaigns={mockSimilarCampaigns}
-            confidence={78}
+            similarCampaigns={trustAnalysis.duplicationCheck.matches.map(
+              (match) => ({
+                id: match.campaignId,
+                title: `Similar Campaign ${match.campaignId.slice(0, 8)}`,
+                creator: "Unknown Creator",
+                similarity: Math.round(match.similarity * 100),
+                matchedSegments: match.matchedSegments.map((seg) => seg.text),
+                status: "active" as const,
+              }),
+            )}
+            confidence={Math.round(
+              trustAnalysis.duplicationCheck.confidence * 100,
+            )}
             onDismiss={() => console.log("Dismissed")}
             onReport={(id) => console.log("Reported:", id)}
             onViewDetails={(id) => console.log("View details:", id)}
